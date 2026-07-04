@@ -1,0 +1,9 @@
+node_modules/
+dist/
+frontend/dist/
+.shipshape/
+.claude/
+.env
+.DS_Store
+npm-debug.log*
+*.tsbuildinfo
