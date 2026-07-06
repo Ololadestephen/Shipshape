@@ -32,8 +32,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      const queryProjectId = new URLSearchParams(window.location.search).get("project");
       const storedId = window.localStorage.getItem(selectedProjectKey);
-      const projectId = projects.some((project) => project.id === storedId) ? storedId! : projects[0].id;
+      const projectId = projects.some((project) => project.id === queryProjectId)
+        ? queryProjectId!
+        : projects.some((project) => project.id === storedId)
+          ? storedId!
+          : projects[0].id;
+      window.localStorage.setItem(selectedProjectKey, projectId);
       const [nextDetail, nextReport] = await Promise.all([getProject(projectId), getProjectReport(projectId)]);
       setDetail(nextDetail);
       setReport(nextReport);
