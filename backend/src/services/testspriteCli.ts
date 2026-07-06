@@ -46,9 +46,9 @@ export async function createTestSpriteProjectCli(
   }
 
   const raw = parseTestSpritePayload(result.stdout);
-  const id = readProjectId(raw);
+  const id = readTestSpriteProjectId(raw);
   if (!id) {
-    throw new Error("TestSprite did not return a project id.");
+    throw new Error(`TestSprite did not return a project id. Response keys: ${describeShape(raw)}`);
   }
 
   return {
@@ -120,47 +120,68 @@ function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv): Pr
   });
 }
 
-function readProjectId(raw: unknown): string | undefined {
+export function readTestSpriteProjectId(raw: unknown): string | undefined {
+  const candidate = findStringByKeys(raw, ["id", "projectId", "project_id"]);
+  if (candidate) {
+    return candidate;
+  }
+
   if (!isRecord(raw)) {
     return undefined;
-  }
-
-  const direct = raw.id;
-  if (typeof direct === "string" && direct.trim()) {
-    return direct;
-  }
-
-  const data = raw.data;
-  if (isRecord(data) && typeof data.id === "string" && data.id.trim()) {
-    return data.id;
-  }
-
-  const project = raw.project;
-  if (isRecord(project) && typeof project.id === "string" && project.id.trim()) {
-    return project.id;
   }
 
   return undefined;
 }
 
 function readTargetUrl(raw: unknown): string | undefined {
-  if (!isRecord(raw)) {
+  return findStringByKeys(raw, ["targetUrl", "target_url", "url"]);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function findStringByKeys(value: unknown, keys: string[]): string | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findStringByKeys(item, keys);
+      if (found) {
+        return found;
+      }
+    }
+
     return undefined;
   }
 
-  const direct = raw.targetUrl;
-  if (typeof direct === "string" && direct.trim()) {
-    return direct;
+  if (!isRecord(value)) {
+    return undefined;
   }
 
-  const data = raw.data;
-  if (isRecord(data) && typeof data.targetUrl === "string" && data.targetUrl.trim()) {
-    return data.targetUrl;
+  for (const key of keys) {
+    const direct = value[key];
+    if (typeof direct === "string" && direct.trim()) {
+      return direct;
+    }
+  }
+
+  for (const nested of Object.values(value)) {
+    const found = findStringByKeys(nested, keys);
+    if (found) {
+      return found;
+    }
   }
 
   return undefined;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function describeShape(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `array(${value.length})`;
+  }
+
+  if (!isRecord(value)) {
+    return typeof value;
+  }
+
+  return Object.keys(value).slice(0, 12).join(", ") || "empty object";
 }

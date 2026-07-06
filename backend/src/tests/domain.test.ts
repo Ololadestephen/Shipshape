@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generateChecks } from "../domain/checklistGenerator.js";
 import { calculateReadiness, generateLaunchReport } from "../domain/readiness.js";
 import { ShipShapeService } from "../services/shipshapeService.js";
-import { buildCreateProjectArgs, buildTestSpriteArgs } from "../services/testspriteCli.js";
+import { buildCreateProjectArgs, buildTestSpriteArgs, readTestSpriteProjectId } from "../services/testspriteCli.js";
 import { mapTestSpriteOutput } from "../services/testspriteMapper.js";
 import { MemoryStore } from "../storage/memoryStore.js";
 import type { Check, Flow, Issue } from "../types/domain.js";
@@ -210,6 +210,18 @@ describe("TestSprite CLI commands", () => {
     expect(args).toContain("create");
     expect(args).toContain("frontend");
     expect(args).toContain("https://shipshape.vercel.app");
+  });
+
+  it("accepts nested projectId fields from TestSprite project creation output", () => {
+    expect(
+      readTestSpriteProjectId({
+        data: {
+          project: {
+            projectId: "p_nested_123"
+          }
+        }
+      })
+    ).toBe("p_nested_123");
   });
 });
 
