@@ -43,7 +43,7 @@ After deployment, click `Create Project` in ShipShape or run:
 testsprite --output json project create --type frontend --name ShipShape --url https://your-public-url.example
 ```
 
-ShipShape's Checks and Report pages show the TestSprite evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
+When you click `Run TestSprite`, ShipShape generates fresh frontend TestSprite plan specs from the audit checks, creates the tests, runs them against the public target URL, then maps the returned results into the launch gate. Checks and Report show the evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
 
 ## CI/CD Gate
 

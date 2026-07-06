@@ -65,7 +65,7 @@ After both services are public:
 1. Create an audit in ShipShape using the public frontend URL.
 2. Open Checks.
 3. Confirm the TestSprite project id is already filled on Checks.
-4. Run TestSprite from ShipShape.
+4. Run TestSprite from ShipShape. ShipShape will create fresh frontend plan tests from the audit checks, run them against the public URL, and show whether the evidence was direct or inferred.
 
 Manual CLI equivalent:
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generateChecks } from "../domain/checklistGenerator.js";
 import { calculateReadiness, generateLaunchReport } from "../domain/readiness.js";
 import { ShipShapeService } from "../services/shipshapeService.js";
-import { buildCreateProjectArgs, buildTestSpriteArgs, readTestSpriteProjectId } from "../services/testspriteCli.js";
+import { buildCreateProjectArgs, buildTestSpriteArgs, buildTestSpritePlanSpecs, readTestSpriteProjectId } from "../services/testspriteCli.js";
 import { mapTestSpriteOutput } from "../services/testspriteMapper.js";
 import { MemoryStore } from "../storage/memoryStore.js";
 import type { Check, Flow, Issue } from "../types/domain.js";
@@ -217,6 +217,17 @@ describe("TestSprite CLI commands", () => {
     expect(args).toContain("create");
     expect(args).toContain("frontend");
     expect(args).toContain("https://shipshape.vercel.app");
+  });
+
+  it("creates concrete frontend plan specs from launch checks", () => {
+    const checks = createChecks();
+    const specs = buildTestSpritePlanSpecs(createProjectFixture(), checks, "project_123");
+
+    expect(specs).toHaveLength(checks.length);
+    expect(specs[0].projectId).toBe("project_123");
+    expect(specs[0].type).toBe("frontend");
+    expect(specs[0].planSteps.some((step) => step.type === "assertion" && !step.description.toLowerCase().includes("verify it works"))).toBe(true);
+    expect(specs.some((spec) => spec.priority === "p0")).toBe(true);
   });
 
   it("accepts nested projectId fields from TestSprite project creation output", () => {

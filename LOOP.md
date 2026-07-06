@@ -63,6 +63,11 @@ ShipShape response:
 - Surface the evidence on Checks and Report so judges can see when a pass is directly matched versus inferred.
 - Added `.github/workflows/testsprite.yml` to run the TestSprite gate in CI/CD.
 
+Follow-up fix:
+- A suite-level `rerun --all` on a fresh frontend project returned an overall pass with zero per-test result rows.
+- ShipShape now creates fresh frontend TestSprite plan specs from the audit checks, batch-creates those tests, and runs each created test against the public URL before marking checks.
+- This moves the demo path from `Inferred Overall Pass` toward direct result evidence.
+
 Evidence in code:
 - `backend/src/services/testspriteMapper.ts`
 - `backend/src/types/domain.ts`

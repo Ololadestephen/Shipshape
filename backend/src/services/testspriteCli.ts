@@ -1,5 +1,8 @@
 import { spawn } from "node:child_process";
-import type { Project } from "../types/domain.js";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { Check, Project, Severity } from "../types/domain.js";
 import { parseTestSpritePayload, type TestSpriteCommandResult } from "./testspriteMapper.js";
 
 export interface TestSpriteConfig {
@@ -20,7 +23,23 @@ export function readTestSpriteConfig(env: NodeJS.ProcessEnv = process.env): Test
   };
 }
 
-export async function runTestSpriteCli(project: Project, config = readTestSpriteConfig()): Promise<TestSpriteCommandResult> {
+interface TestSpritePlanSpec {
+  projectId: string;
+  type: "frontend";
+  name: string;
+  description: string;
+  priority: "p0" | "p1" | "p2";
+  planSteps: Array<{
+    type: "action" | "assertion";
+    description: string;
+  }>;
+}
+
+export async function runTestSpriteCli(project: Project, checks: Check[], config = readTestSpriteConfig()): Promise<TestSpriteCommandResult> {
+  if (!config.testId && config.projectId && checks.length > 0) {
+    return runFreshFrontendPlans(project, checks, config);
+  }
+
   const args = buildTestSpriteArgs(project, config);
   const env = {
     ...process.env,
@@ -86,6 +105,185 @@ export function buildCreateProjectArgs(project: Project, targetUrl: string): str
     "--description",
     `ShipShape launch audit for ${project.url}`
   ];
+}
+
+export function buildTestSpritePlanSpecs(project: Project, checks: Check[], testspriteProjectId: string): TestSpritePlanSpec[] {
+  return checks.map((check) => ({
+    projectId: testspriteProjectId,
+    type: "frontend",
+    name: check.title,
+    description: `${check.title}. ${check.description}`,
+    priority: priorityFromSeverity(check.severity),
+    planSteps: buildPlanSteps(project, check)
+  }));
+}
+
+async function runFreshFrontendPlans(project: Project, checks: Check[], config: TestSpriteConfig): Promise<TestSpriteCommandResult> {
+  const timeout = Number.isFinite(config.timeoutSeconds) && config.timeoutSeconds > 0 ? String(config.timeoutSeconds) : "900";
+  const env = {
+    ...process.env,
+    TESTSPRITE_API_KEY: config.apiKey
+  };
+  const tempDir = await mkdtemp(join(tmpdir(), "shipshape-testsprite-"));
+  const plansFile = join(tempDir, "plans.jsonl");
+
+  try {
+    const specs = buildTestSpritePlanSpecs(project, checks, config.projectId);
+    await writeFile(plansFile, specs.map((spec) => JSON.stringify(spec)).join("\n"), "utf8");
+
+    const createArgs = ["--output", "json", "test", "create-batch", "--plans", plansFile];
+    const createResult = await runCommand(config.cliBin, createArgs, env);
+    if (createResult.exitCode !== 0) {
+      return createResult;
+    }
+
+    const createdPayload = parseTestSpritePayload(createResult.stdout);
+    const createdTests = readCreatedTests(createdPayload);
+    if (createdTests.length === 0) {
+      return {
+        command: [config.cliBin, ...createArgs],
+        exitCode: 1,
+        stdout: JSON.stringify({
+          status: "failed",
+          results: [
+            {
+              name: "TestSprite plan creation",
+              status: "failed",
+              message: "TestSprite did not create any runnable frontend tests for this audit."
+            }
+          ],
+          create: createdPayload
+        }),
+        stderr: createResult.stderr
+      };
+    }
+
+    const runResults = [];
+    const commands = [[config.cliBin, ...createArgs].join(" ")];
+    let exitCode = 0;
+    let stderr = createResult.stderr;
+
+    for (const created of createdTests) {
+      const check = checks[created.specIndex];
+      const runArgs = ["--output", "json", "test", "run", created.testId, "--wait", "--timeout", timeout, "--target-url", project.url];
+      const runResult = await runCommand(config.cliBin, runArgs, env);
+      commands.push([config.cliBin, ...runArgs].join(" "));
+      stderr += runResult.stderr;
+      if (runResult.exitCode !== 0) {
+        exitCode = runResult.exitCode ?? 1;
+      }
+
+      const runPayload = parseMaybeJson(runResult.stdout);
+      const status = runResult.exitCode === 0 ? "passed" : "failed";
+      runResults.push({
+        name: check?.title ?? created.testId,
+        status,
+        message:
+          status === "passed"
+            ? `${check?.title ?? created.testId} passed in a fresh TestSprite frontend run.`
+            : readMessage(runPayload) ?? `${check?.title ?? created.testId} failed in a fresh TestSprite frontend run.`,
+        evidenceUrl: readTargetUrl(runPayload),
+        testId: created.testId,
+        run: runPayload
+      });
+    }
+
+    return {
+      command: commands,
+      exitCode,
+      stdout: JSON.stringify({
+        status: exitCode === 0 ? "passed" : "failed",
+        summary: `TestSprite fresh frontend plans: ${runResults.filter((result) => result.status === "passed").length} passed, ${
+          runResults.filter((result) => result.status === "failed").length
+        } failed.`,
+        results: runResults,
+        create: createdPayload
+      }),
+      stderr
+    };
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+}
+
+function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["planSteps"] {
+  const category = check.category.replace(/_/g, " ");
+  return [
+    {
+      type: "action",
+      description: `Navigate to ${project.url}.`
+    },
+    {
+      type: "action",
+      description: `Exercise the ${category} behavior related to: ${check.title}.`
+    },
+    {
+      type: "assertion",
+      description: concreteAssertion(check)
+    }
+  ];
+}
+
+function concreteAssertion(check: Check) {
+  const assertions: Record<string, string> = {
+    navigation: "Verify the primary navigation exposes working links to the main launch-critical pages without dead ends.",
+    mobile: "Verify the page remains readable and the primary controls are tappable in a narrow mobile viewport.",
+    forms: "Verify required form fields show clear validation feedback and a visible success or error state.",
+    accessibility: "Verify interactive buttons, links, and form controls expose clear accessible names and visible focus states.",
+    error_states: "Verify an empty or invalid state explains what happened and gives the user a next action.",
+    ci_cd: "Verify the release or verification status is visible and not shown as a stale placeholder.",
+    auth: "Verify the authentication or signup path reaches the expected next screen and handles failure visibly.",
+    onboarding: "Verify the first-run onboarding path gives the user a clear first success moment.",
+    security: "Verify sensitive routes or destructive actions are not accessible from an unauthenticated public visit.",
+    performance: "Verify the main page reaches an interactive, usable state without obvious loading stalls.",
+    seo: "Verify the public page exposes a clear title, main heading, and product purpose.",
+    content: "Verify the page copy clearly explains the product purpose and primary action."
+  };
+
+  return assertions[check.category] ?? `Verify this observable outcome: ${check.title}.`;
+}
+
+function priorityFromSeverity(severity: Severity): TestSpritePlanSpec["priority"] {
+  if (severity === "blocker") {
+    return "p0";
+  }
+
+  if (severity === "warning") {
+    return "p1";
+  }
+
+  return "p2";
+}
+
+function readCreatedTests(payload: unknown): Array<{ specIndex: number; testId: string }> {
+  if (!isRecord(payload) || !Array.isArray(payload.results)) {
+    return [];
+  }
+
+  return payload.results.flatMap((item) => {
+    if (!isRecord(item) || item.status !== "created" || typeof item.testId !== "string" || typeof item.specIndex !== "number") {
+      return [];
+    }
+
+    return [
+      {
+        specIndex: item.specIndex,
+        testId: item.testId
+      }
+    ];
+  });
+}
+
+function parseMaybeJson(stdout: string): unknown {
+  try {
+    return parseTestSpritePayload(stdout);
+  } catch {
+    return undefined;
+  }
+}
+
+function readMessage(value: unknown): string | undefined {
+  return findStringByKeys(value, ["message", "summary", "error", "failure", "reason", "actual"]);
 }
 
 function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<TestSpriteCommandResult> {

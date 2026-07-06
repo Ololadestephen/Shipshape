@@ -268,7 +268,7 @@ export class ShipShapeService {
 
     let commandResult;
     try {
-      commandResult = await runTestSpriteCli(project, { ...config, projectId: testspriteProjectId });
+      commandResult = await runTestSpriteCli(project, this.store.listChecks(projectId), { ...config, projectId: testspriteProjectId });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to start TestSprite CLI";
       throw new HttpError(502, `Unable to run TestSprite CLI: ${message}`, "TESTSPRITE_CLI_FAILED");
