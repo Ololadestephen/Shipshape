@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   createTestSpriteProject,
   getTestSpriteSetup,
@@ -15,6 +16,7 @@ import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
 
 export function ChecksIssues() {
+  const location = useLocation();
   const { detail, loading, error, refresh } = useProjectData();
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -25,6 +27,13 @@ export function ChecksIssues() {
   const [testSpriteProjectId, setTestSpriteProjectId] = useState("");
   const [selectedFailureId, setSelectedFailureId] = useState<string | null>(null);
   const [fixPlanVisible, setFixPlanVisible] = useState(false);
+
+  useEffect(() => {
+    const state = location.state as { actionError?: string } | null;
+    if (state?.actionError) {
+      setActionError(state.actionError);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!detail) {

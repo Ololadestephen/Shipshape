@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, type AppType } from "../api";
+import { createProject, createTestSpriteProject, type AppType } from "../api";
 import { Card, FormField, PageIntro } from "../components/ui";
 import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
@@ -30,7 +30,21 @@ export function NewAudit() {
         appType,
         flows: selectedFlows
       });
-      await selectProject(detail.project.id, detail);
+
+      let linkedDetail = detail;
+      try {
+        linkedDetail = await createTestSpriteProject(detail.project.id, detail.project.url);
+      } catch (linkError) {
+        await selectProject(detail.project.id, detail);
+        navigate("/checks", {
+          state: {
+            actionError: linkError instanceof Error ? `Audit created, but TestSprite was not linked: ${linkError.message}` : "Audit created, but TestSprite was not linked"
+          }
+        });
+        return;
+      }
+
+      await selectProject(linkedDetail.project.id, linkedDetail);
       navigate("/checks");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to create launch audit");
