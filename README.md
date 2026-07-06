@@ -28,6 +28,7 @@ Then add these environment variables:
 TESTSPRITE_API_KEY=sk_...
 TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
+TESTSPRITE_MAX_PLANS=5
 ```
 
 ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. Optional fallback env vars:
@@ -43,7 +44,7 @@ After deployment, click `Create Project` in ShipShape or run:
 testsprite --output json project create --type frontend --name ShipShape --url https://your-public-url.example
 ```
 
-When you click `Run TestSprite`, ShipShape generates fresh frontend TestSprite plan specs from the audit checks, creates the tests, runs them against the public target URL, then maps the returned results into the launch gate. Checks and Report show the evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
+When you click `Run TestSprite`, ShipShape generates fresh frontend TestSprite plan specs from the highest-risk audit checks, creates the tests, runs them against the public target URL, then maps the returned results into the launch gate. `TESTSPRITE_MAX_PLANS` controls how many fresh frontend plans are created per run. Checks and Report show the evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
 
 ## CI/CD Gate
 

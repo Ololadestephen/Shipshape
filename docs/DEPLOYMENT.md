@@ -27,6 +27,7 @@ SHIPSHAPE_DATA_FILE=/tmp/shipshape-state.json
 TESTSPRITE_API_KEY=your_testsprite_key
 TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
+TESTSPRITE_MAX_PLANS=5
 ```
 
 Optional:

@@ -128,82 +128,112 @@ async function runFreshFrontendPlans(project: Project, checks: Check[], config: 
   const plansFile = join(tempDir, "plans.jsonl");
 
   try {
-    const specs = buildTestSpritePlanSpecs(project, checks, config.projectId);
+    const scopedChecks = selectChecksForTestSprite(checks);
+    const specs = buildTestSpritePlanSpecs(project, scopedChecks, config.projectId);
     await writeFile(plansFile, specs.map((spec) => JSON.stringify(spec)).join("\n"), "utf8");
 
-    const createArgs = ["--output", "json", "test", "create-batch", "--plans", plansFile];
-    const createResult = await runCommand(config.cliBin, createArgs, env);
-    if (createResult.exitCode !== 0) {
-      return createResult;
-    }
-
-    const createdPayload = parseTestSpritePayload(createResult.stdout);
-    const createdTests = readCreatedTests(createdPayload);
-    if (createdTests.length === 0) {
-      return {
-        command: [config.cliBin, ...createArgs],
-        exitCode: 1,
-        stdout: JSON.stringify({
-          status: "failed",
-          results: [
-            {
-              name: "TestSprite plan creation",
-              status: "failed",
-              message: "TestSprite did not create any runnable frontend tests for this audit."
-            }
-          ],
-          create: createdPayload
-        }),
-        stderr: createResult.stderr
-      };
-    }
-
-    const runResults = [];
-    const commands = [[config.cliBin, ...createArgs].join(" ")];
-    let exitCode = 0;
-    let stderr = createResult.stderr;
-
-    for (const created of createdTests) {
-      const check = checks[created.specIndex];
-      const runArgs = ["--output", "json", "test", "run", created.testId, "--wait", "--timeout", timeout, "--target-url", project.url];
-      const runResult = await runCommand(config.cliBin, runArgs, env);
-      commands.push([config.cliBin, ...runArgs].join(" "));
-      stderr += runResult.stderr;
-      if (runResult.exitCode !== 0) {
-        exitCode = runResult.exitCode ?? 1;
-      }
-
-      const runPayload = parseMaybeJson(runResult.stdout);
-      const status = runResult.exitCode === 0 ? "passed" : "failed";
-      runResults.push({
-        name: check?.title ?? created.testId,
-        status,
-        message:
-          status === "passed"
-            ? `${check?.title ?? created.testId} passed in a fresh TestSprite frontend run.`
-            : readMessage(runPayload) ?? `${check?.title ?? created.testId} failed in a fresh TestSprite frontend run.`,
-        evidenceUrl: readTargetUrl(runPayload),
-        testId: created.testId,
-        run: runPayload
-      });
-    }
+    const args = [
+      "--output",
+      "json",
+      "test",
+      "create-batch",
+      "--plans",
+      plansFile,
+      "--run",
+      "--wait",
+      "--target-url",
+      project.url,
+      "--max-concurrency",
+      String(Math.min(3, specs.length)),
+      "--timeout",
+      timeout
+    ];
+    const result = await runCommand(config.cliBin, args, env);
+    const payload = parseMaybeJson(result.stdout);
+    const batchResults = readBatchRunResults(payload);
+    const runResults = batchResults.length > 0 ? batchResults.map((item, index) => resultFromBatchItem(item, scopedChecks[index])) : [];
 
     return {
-      command: commands,
-      exitCode,
+      command: [config.cliBin, ...args],
+      exitCode: result.exitCode,
       stdout: JSON.stringify({
-        status: exitCode === 0 ? "passed" : "failed",
+        status: result.exitCode === 0 ? "passed" : result.exitCode === 7 ? "partial" : "failed",
         summary: `TestSprite fresh frontend plans: ${runResults.filter((result) => result.status === "passed").length} passed, ${
           runResults.filter((result) => result.status === "failed").length
-        } failed.`,
+        } failed, ${runResults.filter((result) => result.status === "skipped").length} unresolved.`,
         results: runResults,
-        create: createdPayload
+        batch: payload
       }),
-      stderr
+      stderr: result.stderr
     };
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+}
+
+function selectChecksForTestSprite(checks: Check[]): Check[] {
+  const maxPlans = readMaxPlans();
+  return checks
+    .slice()
+    .sort((left, right) => severityRank(right.severity) - severityRank(left.severity))
+    .slice(0, maxPlans);
+}
+
+function readMaxPlans() {
+  const parsed = Number(process.env.TESTSPRITE_MAX_PLANS ?? 5);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 12) : 5;
+}
+
+function severityRank(severity: Severity) {
+  if (severity === "blocker") {
+    return 3;
+  }
+
+  if (severity === "warning") {
+    return 2;
+  }
+
+  return 1;
+}
+
+function readBatchRunResults(payload: unknown): Array<Record<string, unknown>> {
+  if (!isRecord(payload) || !Array.isArray(payload.results)) {
+    return [];
+  }
+
+  return payload.results.filter(isRecord);
+}
+
+function resultFromBatchItem(item: Record<string, unknown>, check?: Check) {
+  const rawStatus = typeof item.status === "string" ? item.status : "";
+  const status = normalizeRunStatus(rawStatus);
+  return {
+    name: check?.title ?? readString(item, "testId") ?? "TestSprite frontend plan",
+    status,
+    message:
+      status === "passed"
+        ? `${check?.title ?? "TestSprite frontend plan"} passed in a fresh TestSprite run.`
+        : status === "failed"
+          ? readMessage(item) ?? `${check?.title ?? "TestSprite frontend plan"} failed in a fresh TestSprite run.`
+          : `${check?.title ?? "TestSprite frontend plan"} did not finish before the TestSprite wait timeout.`,
+    evidenceUrl: readTargetUrl(item),
+    testId: readString(item, "testId"),
+    runId: readString(item, "runId"),
+    run: item
+  };
+}
+
+function normalizeRunStatus(status: string) {
+  const normalized = status.toLowerCase();
+  if (["passed", "pass", "success", "succeeded", "ready", "ok"].includes(normalized)) {
+    return "passed" as const;
+  }
+
+  if (["failed", "fail", "failure", "error", "blocked", "cancelled", "canceled"].includes(normalized)) {
+    return "failed" as const;
+  }
+
+  return "skipped" as const;
 }
 
 function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["planSteps"] {
@@ -255,25 +285,6 @@ function priorityFromSeverity(severity: Severity): TestSpritePlanSpec["priority"
   return "p2";
 }
 
-function readCreatedTests(payload: unknown): Array<{ specIndex: number; testId: string }> {
-  if (!isRecord(payload) || !Array.isArray(payload.results)) {
-    return [];
-  }
-
-  return payload.results.flatMap((item) => {
-    if (!isRecord(item) || item.status !== "created" || typeof item.testId !== "string" || typeof item.specIndex !== "number") {
-      return [];
-    }
-
-    return [
-      {
-        specIndex: item.specIndex,
-        testId: item.testId
-      }
-    ];
-  });
-}
-
 function parseMaybeJson(stdout: string): unknown {
   try {
     return parseTestSpritePayload(stdout);
@@ -284,6 +295,11 @@ function parseMaybeJson(stdout: string): unknown {
 
 function readMessage(value: unknown): string | undefined {
   return findStringByKeys(value, ["message", "summary", "error", "failure", "reason", "actual"]);
+}
+
+function readString(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<TestSpriteCommandResult> {
