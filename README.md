@@ -1,6 +1,6 @@
 # ShipShape
 
-ShipShape turns real TestSprite runs into a launch decision. It tracks projects, critical flows, launch checks, issues, verification runs, reports, and loop entries.
+ShipShape turns real TestSprite runs into a launch decision. It tracks projects, critical flows, launch checks, issues, verification runs, evidence quality, reports, and loop entries.
 
 ## Run Locally
 
@@ -30,10 +30,10 @@ TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
 ```
 
-ShipShape can store a TestSprite project id per audit from the Checks screen. Optional fallback env vars:
+ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. Optional fallback env vars:
 
 ```bash
-TESTSPRITE_PROJECT_ID=p_...
+TESTSPRITE_PROJECT_ID=your_project_id
 TESTSPRITE_TEST_ID=test_...
 ```
 
@@ -43,7 +43,16 @@ After deployment, click `Create Project` in ShipShape or run:
 testsprite --output json project create --type frontend --name ShipShape --url https://your-public-url.example
 ```
 
-Copy the returned `id` into ShipShape's TestSprite project id field.
+ShipShape's Checks and Report pages show the TestSprite evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
+
+## CI/CD Gate
+
+The repo includes `.github/workflows/testsprite.yml` for the hackathon CI/CD bonus. Add these in GitHub:
+
+- Repository secret: `TESTSPRITE_API_KEY`
+- Repository variable: `TESTSPRITE_PROJECT_ID`
+
+The workflow runs TestSprite on pushes to `main`, pull requests, and manual dispatch.
 
 ## Useful Endpoints
 

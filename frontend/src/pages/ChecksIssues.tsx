@@ -58,6 +58,7 @@ export function ChecksIssues() {
 
   const currentDetail = detail;
   const latestRun = currentDetail.runs.slice().sort((left, right) => right.completedAt.localeCompare(left.completedAt))[0];
+  const latestEvidence = latestRun?.source === "testsprite" ? latestRun.evidence : undefined;
   const passedChecks = currentDetail.checks.filter((check) => check.status === "verified").length;
   const failedChecks = currentDetail.checks.filter((check) => check.status === "failed").length;
   const issueByCheckId = new Map(currentDetail.issues.filter((issue) => issue.checkId).map((issue) => [issue.checkId, issue]));
@@ -148,7 +149,7 @@ export function ChecksIssues() {
           </div>
           <input
             aria-label="TestSprite project id"
-            placeholder="p_..."
+            placeholder="Project ID"
             value={testSpriteProjectId}
             onChange={(event) => setTestSpriteProjectId(event.target.value)}
           />
@@ -174,6 +175,35 @@ export function ChecksIssues() {
           </div>
         </div>
         {actionError && <p className="form-error">{actionError}</p>}
+        {latestEvidence && (
+          <div className={`evidence-proof evidence-${latestEvidence.inferredChecks > 0 ? "inferred" : "direct"}`}>
+            <div>
+              <span>Evidence</span>
+              <strong>{formatMappingMode(latestEvidence.mappingMode)}</strong>
+            </div>
+            <div>
+              <span>Results</span>
+              <strong>{latestEvidence.resultItems}</strong>
+            </div>
+            <div>
+              <span>Matched</span>
+              <strong>{latestEvidence.matchedChecks}</strong>
+            </div>
+            <div>
+              <span>Inferred</span>
+              <strong>{latestEvidence.inferredChecks}</strong>
+            </div>
+            <div>
+              <span>Exit</span>
+              <strong>{latestEvidence.exitCode ?? "?"}</strong>
+            </div>
+            {latestEvidence.reportUrl && (
+              <a href={latestEvidence.reportUrl} rel="noreferrer" target="_blank">
+                Evidence
+              </a>
+            )}
+          </div>
+        )}
         <table>
           <thead>
             <tr>
@@ -292,4 +322,10 @@ function fixPlan(check: Check, issue?: Issue) {
     fixSummary(check),
     `Run TestSprite again and confirm ${check.title} passes.`
   ];
+}
+
+function formatMappingMode(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

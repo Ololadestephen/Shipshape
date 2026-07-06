@@ -20,6 +20,7 @@ import type {
   RunResult,
   RunSource,
   RunStatus,
+  TestSpriteRunEvidence,
   VerificationRun
 } from "../types/domain.js";
 
@@ -52,6 +53,7 @@ export interface CreateRunInput {
   source: RunSource;
   status: RunStatus;
   summary: string;
+  evidence?: TestSpriteRunEvidence;
   results?: Array<{
     checkId?: string;
     status: ResultStatus;
@@ -227,6 +229,7 @@ export class ShipShapeService {
       source: input.source,
       status: input.status,
       summary: input.summary,
+      evidence: input.evidence,
       startedAt: now,
       completedAt: now,
       createdAt: now
@@ -240,7 +243,7 @@ export class ShipShapeService {
     this.createLoopEntry(projectId, {
       kind: input.status === "passed" ? "verification" : "failure",
       title: `${labelSource(input.source)} run ${input.status}`,
-      body: input.summary,
+      body: input.evidence ? `${input.summary} ${formatEvidence(input.evidence)}` : input.summary,
       runId: run.id
     });
 
@@ -546,6 +549,17 @@ function labelSource(source: RunSource): string {
   }
 
   return "Manual";
+}
+
+function formatEvidence(evidence: TestSpriteRunEvidence): string {
+  const resultLabel = evidence.resultItems === 1 ? "result item" : "result items";
+  const inferred =
+    evidence.inferredChecks > 0
+      ? `, ${evidence.inferredChecks} inferred check${evidence.inferredChecks === 1 ? "" : "s"}`
+      : "";
+  return `(Evidence: ${evidence.resultItems} TestSprite ${resultLabel}, ${evidence.matchedChecks} matched check${
+    evidence.matchedChecks === 1 ? "" : "s"
+  }${inferred}, mode ${evidence.mappingMode}, exit ${evidence.exitCode ?? "unknown"}.)`;
 }
 
 function isLocalUrl(value: string) {

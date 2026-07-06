@@ -22,6 +22,7 @@ export type RunStatus = "passed" | "failed" | "partial";
 export type ResultStatus = "passed" | "failed" | "skipped";
 export type ReportVerdict = "ready" | "ready_with_warnings" | "in_progress" | "blocked";
 export type LoopEntryKind = "failure" | "fix" | "verification" | "note";
+export type TestSpriteMappingMode = "direct" | "direct_plus_inferred" | "inferred_overall_pass" | "single_failure_fallback" | "partial_skipped";
 
 export interface Project {
   id: string;
@@ -75,9 +76,22 @@ export interface VerificationRun {
   source: RunSource;
   status: RunStatus;
   summary: string;
+  evidence?: TestSpriteRunEvidence;
   startedAt: string;
   completedAt: string;
   createdAt: string;
+}
+
+export interface TestSpriteRunEvidence {
+  command: string;
+  exitCode: number | null;
+  resultItems: number;
+  matchedChecks: number;
+  inferredChecks: number;
+  unmatchedResults: number;
+  mappingMode: TestSpriteMappingMode;
+  payloadStatus?: string;
+  reportUrl?: string;
 }
 
 export interface LaunchReport {

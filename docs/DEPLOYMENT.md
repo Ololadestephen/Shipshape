@@ -32,7 +32,7 @@ TESTSPRITE_TIMEOUT_SECONDS=900
 Optional:
 
 ```txt
-TESTSPRITE_PROJECT_ID=p_...
+TESTSPRITE_PROJECT_ID=your_project_id
 TESTSPRITE_TEST_ID=test_...
 ```
 
@@ -64,7 +64,7 @@ After both services are public:
 
 1. Create an audit in ShipShape using the public frontend URL.
 2. Open Checks.
-3. Click `Create Project`.
+3. Confirm the TestSprite project id is already filled on Checks.
 4. Run TestSprite from ShipShape.
 
 Manual CLI equivalent:
@@ -73,7 +73,18 @@ Manual CLI equivalent:
 testsprite --output json project create --type frontend --name ShipShape --url https://your-frontend.vercel.app
 ```
 
-Copy the returned `id` into ShipShape's TestSprite project id field if needed.
+Copy the returned `id` into ShipShape's TestSprite project id field only if automatic project creation fails.
+
+## GitHub Actions TestSprite Gate
+
+The workflow at `.github/workflows/testsprite.yml` needs:
+
+```txt
+Secret: TESTSPRITE_API_KEY
+Variable: TESTSPRITE_PROJECT_ID
+```
+
+Use the TestSprite project id from your strongest demo audit.
 
 ## Pre-Push Verification
 

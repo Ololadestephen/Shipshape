@@ -1,4 +1,4 @@
-import type { Check, ResultStatus, RunStatus } from "../types/domain.js";
+import type { Check, ResultStatus, RunStatus, TestSpriteMappingMode, TestSpriteRunEvidence } from "../types/domain.js";
 
 export interface TestSpriteCommandResult {
   command: string[];
@@ -11,6 +11,7 @@ export interface MappedTestSpriteRun {
   source: "testsprite";
   status: RunStatus;
   summary: string;
+  evidence: TestSpriteRunEvidence;
   results: Array<{
     checkId?: string;
     status: ResultStatus;
@@ -24,6 +25,14 @@ interface ParsedResult {
   status: ResultStatus;
   message: string;
   evidenceUrl?: string;
+}
+
+interface MappedCheckResults {
+  results: MappedTestSpriteRun["results"];
+  matchedChecks: number;
+  inferredChecks: number;
+  unmatchedResults: number;
+  mappingMode: TestSpriteMappingMode;
 }
 
 export function parseTestSpritePayload(stdout: string): unknown {
@@ -55,14 +64,25 @@ export function mapTestSpriteOutput(checks: Check[], commandResult: TestSpriteCo
   const payload = parseTestSpritePayload(commandResult.stdout);
   const parsedResults = extractResults(payload);
   const status = inferRunStatus(payload, parsedResults, commandResult.exitCode);
-  const results = mapResultsToChecks(checks, parsedResults, status);
+  const mapped = mapResultsToChecks(checks, parsedResults, status);
   const summary = buildSummary(payload, status, parsedResults, commandResult.exitCode);
 
   return {
     source: "testsprite",
     status,
+    evidence: {
+      command: commandResult.command.join(" "),
+      exitCode: commandResult.exitCode,
+      resultItems: parsedResults.length,
+      matchedChecks: mapped.matchedChecks,
+      inferredChecks: mapped.inferredChecks,
+      unmatchedResults: mapped.unmatchedResults,
+      mappingMode: mapped.mappingMode,
+      payloadStatus: findStatus(payload),
+      reportUrl: findUrl(payload)
+    },
     summary,
-    results
+    results: mapped.results
   };
 }
 
@@ -142,7 +162,7 @@ function inferRunStatus(payload: unknown, results: ParsedResult[], exitCode: num
   return exitCode === 0 ? "passed" : "failed";
 }
 
-function mapResultsToChecks(checks: Check[], parsedResults: ParsedResult[], status: RunStatus): MappedTestSpriteRun["results"] {
+function mapResultsToChecks(checks: Check[], parsedResults: ParsedResult[], status: RunStatus): MappedCheckResults {
   const usedCheckIds = new Set<string>();
   const mapped = parsedResults.map((result) => {
     const check = findBestCheck(result, checks, usedCheckIds);
@@ -159,6 +179,8 @@ function mapResultsToChecks(checks: Check[], parsedResults: ParsedResult[], stat
   });
 
   if (mapped.some((result) => result.checkId)) {
+    const matchedChecks = usedCheckIds.size;
+    const unmatchedResults = mapped.filter((result) => !result.checkId).length;
     if (status === "passed") {
       const extraPassed = checks
         .filter((check) => !usedCheckIds.has(check.id))
@@ -167,18 +189,36 @@ function mapResultsToChecks(checks: Check[], parsedResults: ParsedResult[], stat
           status: "passed" as const,
           message: `${check.title} passed in TestSprite.`
         }));
-      return [...mapped, ...extraPassed];
+      return {
+        results: [...mapped, ...extraPassed],
+        matchedChecks,
+        inferredChecks: extraPassed.length,
+        unmatchedResults,
+        mappingMode: extraPassed.length > 0 ? "direct_plus_inferred" : "direct"
+      };
     }
 
-    return mapped;
+    return {
+      results: mapped,
+      matchedChecks,
+      inferredChecks: 0,
+      unmatchedResults,
+      mappingMode: "direct"
+    };
   }
 
   if (status === "passed") {
-    return checks.map((check) => ({
-      checkId: check.id,
-      status: "passed",
-      message: `${check.title} passed in TestSprite.`
-    }));
+    return {
+      results: checks.map((check) => ({
+        checkId: check.id,
+        status: "passed",
+        message: `${check.title} passed in TestSprite.`
+      })),
+      matchedChecks: 0,
+      inferredChecks: checks.length,
+      unmatchedResults: parsedResults.length,
+      mappingMode: "inferred_overall_pass"
+    };
   }
 
   if (status === "failed") {
@@ -187,22 +227,34 @@ function mapResultsToChecks(checks: Check[], parsedResults: ParsedResult[], stat
       checks.find((candidate) => candidate.status !== "verified") ??
       checks[0];
 
-    return check
-      ? [
-          {
-            checkId: check.id,
-            status: "failed",
-            message: "TestSprite failed the run, but did not include a per-check result in the JSON output."
-          }
-        ]
-      : [];
+    return {
+      results: check
+        ? [
+            {
+              checkId: check.id,
+              status: "failed",
+              message: "TestSprite failed the run, but did not include a per-check result in the JSON output."
+            }
+          ]
+        : [],
+      matchedChecks: 0,
+      inferredChecks: check ? 1 : 0,
+      unmatchedResults: parsedResults.length,
+      mappingMode: "single_failure_fallback"
+    };
   }
 
-  return checks.map((check) => ({
-    checkId: check.id,
-    status: "skipped",
-    message: `${check.title} was not resolved by the TestSprite run.`
-  }));
+  return {
+    results: checks.map((check) => ({
+      checkId: check.id,
+      status: "skipped",
+      message: `${check.title} was not resolved by the TestSprite run.`
+    })),
+    matchedChecks: 0,
+    inferredChecks: checks.length,
+    unmatchedResults: parsedResults.length,
+    mappingMode: "partial_skipped"
+  };
 }
 
 function findBestCheck(result: ParsedResult, checks: Check[], usedCheckIds: Set<string>) {
@@ -269,6 +321,37 @@ function findStatus(payload: unknown): string | undefined {
     readNestedString(payload, ["result", "status"]) ??
     readNestedString(payload, ["data", "status"])
   );
+}
+
+function findUrl(payload: unknown): string | undefined {
+  if (Array.isArray(payload)) {
+    for (const item of payload) {
+      const found = findUrl(item);
+      if (found) {
+        return found;
+      }
+    }
+
+    return undefined;
+  }
+
+  if (!isRecord(payload)) {
+    return undefined;
+  }
+
+  const direct = firstString(payload, ["reportUrl", "report_url", "failureBundleUrl", "failure_bundle_url", "runUrl", "run_url", "url"]);
+  if (direct?.startsWith("http")) {
+    return direct;
+  }
+
+  for (const nested of Object.values(payload)) {
+    const found = findUrl(nested);
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
 }
 
 function toResultStatus(rawStatus: string | undefined): ResultStatus | undefined {

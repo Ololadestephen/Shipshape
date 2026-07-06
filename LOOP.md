@@ -51,6 +51,25 @@ Evidence in code:
 - `render.yaml`
 - `frontend/vercel.json`
 
+## Loop 4: Make The Checker Auditable
+
+Initial risk:
+- A green dashboard can still be untrustworthy if it hides whether checks came from real TestSprite result rows or from a suite-level pass.
+- API credit and external dashboards can be hard to inspect during judging, so the app needs to explain the evidence it received.
+
+ShipShape response:
+- Added TestSprite evidence metadata to every TestSprite verification run.
+- Track CLI exit code, result item count, matched checks, inferred checks, unmatched results, mapping mode, payload status, and report URL when available.
+- Surface the evidence on Checks and Report so judges can see when a pass is directly matched versus inferred.
+- Added `.github/workflows/testsprite.yml` to run the TestSprite gate in CI/CD.
+
+Evidence in code:
+- `backend/src/services/testspriteMapper.ts`
+- `backend/src/types/domain.ts`
+- `frontend/src/pages/ChecksIssues.tsx`
+- `frontend/src/pages/ReportLoop.tsx`
+- `.github/workflows/testsprite.yml`
+
 ## Final Demo Flow
 
 1. Open ShipShape.
@@ -64,4 +83,4 @@ Evidence in code:
 
 ## Current Verdict
 
-ShipShape is ready for deployment preparation. The product has a real TestSprite-backed loop, deploy configs, persistence for audit state, and a concise launch report surface.
+ShipShape is ready for final proof runs. The product has a real TestSprite-backed loop, deploy configs, persistence for audit state, evidence quality metadata, a CI/CD gate, and a concise launch report surface.

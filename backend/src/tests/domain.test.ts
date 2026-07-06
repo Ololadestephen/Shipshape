@@ -148,6 +148,9 @@ describe("TestSprite result mapping", () => {
     expect(mapped.status).toBe("passed");
     expect(mapped.results).toHaveLength(checks.length);
     expect(mapped.results.every((result) => result.status === "passed" && result.checkId)).toBe(true);
+    expect(mapped.evidence.resultItems).toBe(0);
+    expect(mapped.evidence.inferredChecks).toBe(checks.length);
+    expect(mapped.evidence.mappingMode).toBe("inferred_overall_pass");
   });
 
   it("maps failed TestSprite items to matching checks", () => {
@@ -171,6 +174,9 @@ describe("TestSprite result mapping", () => {
 
     expect(mapped.status).toBe("failed");
     expect(mapped.results.some((result) => result.checkId === mobileCheck?.id && result.status === "failed")).toBe(true);
+    expect(mapped.evidence.resultItems).toBe(1);
+    expect(mapped.evidence.matchedChecks).toBe(1);
+    expect(mapped.evidence.mappingMode).toBe("direct");
   });
 
   it("falls back to the first unresolved blocker when failed output has no per-check data", () => {
@@ -186,6 +192,7 @@ describe("TestSprite result mapping", () => {
     expect(mapped.results).toHaveLength(1);
     expect(mapped.results[0].status).toBe("failed");
     expect(mapped.results[0].checkId).toBe(checks.find((check) => check.severity === "blocker")?.id);
+    expect(mapped.evidence.mappingMode).toBe("single_failure_fallback");
   });
 });
 

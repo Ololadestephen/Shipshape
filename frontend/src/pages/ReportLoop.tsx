@@ -17,6 +17,7 @@ export function ReportLoop() {
   }
 
   const latestRun = detail.runs.slice().sort((left, right) => right.completedAt.localeCompare(left.completedAt))[0];
+  const latestEvidence = latestRun?.source === "testsprite" ? latestRun.evidence : undefined;
   const orderedRuns = detail.runs.slice().sort((left, right) => left.completedAt.localeCompare(right.completedAt));
   const firstFailingRun = orderedRuns.find((run) => run.status === "failed");
   const passingRuns = orderedRuns.filter((run) => run.status === "passed");
@@ -75,6 +76,31 @@ export function ReportLoop() {
         </button>
       </Card>
       <Card className="evidence-card">
+        {latestEvidence && (
+          <div className={`evidence-proof evidence-${latestEvidence.inferredChecks > 0 ? "inferred" : "direct"}`}>
+            <div>
+              <span>Proof</span>
+              <strong>{formatMappingMode(latestEvidence.mappingMode)}</strong>
+            </div>
+            <div>
+              <span>Results</span>
+              <strong>{latestEvidence.resultItems}</strong>
+            </div>
+            <div>
+              <span>Matched</span>
+              <strong>{latestEvidence.matchedChecks}</strong>
+            </div>
+            <div>
+              <span>Inferred</span>
+              <strong>{latestEvidence.inferredChecks}</strong>
+            </div>
+            {latestEvidence.reportUrl && (
+              <a href={latestEvidence.reportUrl} rel="noreferrer" target="_blank">
+                Evidence
+              </a>
+            )}
+          </div>
+        )}
         <div className="evidence-step">
           <span>Before</span>
           <strong>{firstFailingRun ? "Blocked by TestSprite" : "No failing run"}</strong>
@@ -101,4 +127,10 @@ function PageState({ title }: { title: string }) {
       <PageIntro title={title} />
     </div>
   );
+}
+
+function formatMappingMode(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

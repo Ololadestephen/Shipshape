@@ -1,0 +1,35 @@
+name: TestSprite Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  testsprite:
+    name: Run TestSprite launch gate
+    runs-on: ubuntu-latest
+    env:
+      TESTSPRITE_API_KEY: ${{ secrets.TESTSPRITE_API_KEY }}
+      TESTSPRITE_PROJECT_ID: ${{ vars.TESTSPRITE_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install TestSprite CLI
+        run: npm install -g @testsprite/testsprite-cli
+
+      - name: Verify configuration
+        run: |
+          test -n "$TESTSPRITE_API_KEY" || (echo "Missing TESTSPRITE_API_KEY secret" && exit 1)
+          test -n "$TESTSPRITE_PROJECT_ID" || (echo "Missing TESTSPRITE_PROJECT_ID repository variable" && exit 1)
+
+      - name: Run TestSprite
+        run: testsprite --output json test rerun --all --project "$TESTSPRITE_PROJECT_ID" --wait --timeout 900
