@@ -6,8 +6,7 @@ import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
 
 const appTypes: AppType[] = ["saas", "ecommerce", "portfolio", "internal_tool", "marketplace", "content", "other"];
-const defaultFlows = ["Dashboard", "Report export", "Forms"];
-const flowOptions = ["Signup", "Login", "Dashboard", "Contact form", "Billing", "Checkout", "Search", "Report export"];
+const flowOptions = ["Signup", "Login", "Contact form", "Billing", "Checkout", "Search", "Report export"];
 
 export function NewAudit() {
   const navigate = useNavigate();
@@ -15,7 +14,7 @@ export function NewAudit() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [appType, setAppType] = useState<AppType>("saas");
-  const [selectedFlows, setSelectedFlows] = useState<string[]>(defaultFlows);
+  const [selectedFlows, setSelectedFlows] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +28,7 @@ export function NewAudit() {
         name,
         url,
         appType,
-        flows: selectedFlows.length > 0 ? selectedFlows : defaultFlows
+        flows: selectedFlows
       });
 
       let linkedDetail = detail;

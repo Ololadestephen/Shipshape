@@ -298,7 +298,20 @@ function PageState({ title }: { title: string }) {
 }
 
 function failureCause(check: Check, issue?: Issue) {
-  return issue?.actual ?? `${check.title} did not pass the latest TestSprite launch gate.`;
+  if (issue?.actual) {
+    return issue.actual;
+  }
+
+  const causes: Record<string, string> = {
+    mobile: "TestSprite found a small-screen usability failure. The likely issue is overflow, cramped tap targets, or content that is not adapting at mobile widths.",
+    forms: "TestSprite could not complete the form path reliably. The likely issue is submit behavior, validation feedback, or a disabled/missing interactive control.",
+    navigation: "TestSprite reached a UI control or route that did not produce the expected page/content transition.",
+    ci_cd: "TestSprite could not find a current release-gate signal tied to the latest verification run.",
+    accessibility: "TestSprite found an interaction that needs clearer labels, focus behavior, or keyboard-safe controls.",
+    security: "TestSprite found a public path that may expose a protected state or sensitive action."
+  };
+
+  return causes[check.category] ?? `${check.title} failed in the latest TestSprite launch gate.`;
 }
 
 function fixSummary(check: Check) {
@@ -316,12 +329,41 @@ function fixSummary(check: Check) {
 }
 
 function fixPlan(check: Check, issue?: Issue) {
-  return [
-    `Inspect the ${formatValue(check.category)} surface tied to ${check.title}.`,
-    issue?.actual ?? `${check.title} failed in the latest TestSprite run.`,
-    fixSummary(check),
-    `Run TestSprite again and confirm ${check.title} passes.`
-  ];
+  const evidence = issue?.actual ?? failureCause(check, issue);
+  const plans: Record<string, string[]> = {
+    mobile: [
+      "Open the deployed app at 390px and 768px widths and reproduce the failing screen.",
+      "Fix horizontal overflow first, then check tap target spacing, sticky headers, and controls near the viewport edges.",
+      "Use responsive CSS constraints such as max-width, wrapping, grid fallbacks, and stable button heights.",
+      "Rerun the Mobile TestSprite check and confirm the failure changes to verified."
+    ],
+    forms: [
+      "Open the exact form path on the deployed URL and test both mouse click and Enter-key submission.",
+      "Ensure the submit action is a real button in the DOM with type=\"submit\" and visible enabled/disabled states.",
+      "Show inline validation for missing or invalid fields and preserve user input after a failed submit.",
+      "Rerun the Forms TestSprite check and confirm the form can be completed from a fresh session."
+    ],
+    navigation: [
+      "Start from a fresh browser session and click the control or CTA TestSprite exercised.",
+      "Replace visual-only pills/tabs with real links or button handlers that update route and content.",
+      "Confirm the URL, heading, and primary content all change to the expected destination.",
+      "Rerun the Navigation TestSprite check and verify it reaches the expected page."
+    ],
+    ci_cd: [
+      "Confirm the release gate reads the latest TestSprite or CI run instead of a placeholder.",
+      "Show no-run, running, failed, and passed states explicitly.",
+      "Add the latest run timestamp/source beside the release decision.",
+      "Rerun TestSprite and confirm the report references the current run."
+    ],
+    accessibility: [
+      "Tab through the failing surface and confirm focus never disappears.",
+      "Add accessible names to icon-only buttons and form controls.",
+      "Check labels, roles, and visible focus states on the controls TestSprite used.",
+      "Rerun the Accessibility check after the keyboard path is reliable."
+    ]
+  };
+
+  return [`Evidence: ${evidence}`, ...(plans[check.category] ?? [fixSummary(check), `Rerun TestSprite and confirm ${check.title} passes.`])];
 }
 
 function formatMappingMode(value: string) {

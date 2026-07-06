@@ -64,7 +64,7 @@ const appTypeTemplates: Record<AppType, CheckTemplate[]> = {
     {
       category: "security",
       title: "Security",
-      description: "Dashboard, settings, and account routes should not leak protected states.",
+      description: "Settings and account routes should not leak protected states.",
       severity: "blocker"
     }
   ],

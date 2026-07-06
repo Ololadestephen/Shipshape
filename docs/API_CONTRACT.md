@@ -33,7 +33,7 @@ Returns all projects with computed readiness summary.
   "name": "ShipShape",
   "url": "https://shipshape.example.com",
   "appType": "saas",
-  "flows": ["signup", "login", "dashboard"]
+  "flows": ["signup", "login", "report export"]
 }
 ```
 

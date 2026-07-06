@@ -28,7 +28,7 @@ Then add these environment variables:
 TESTSPRITE_API_KEY=sk_...
 TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
-TESTSPRITE_MAX_PLANS=5
+TESTSPRITE_MAX_PLANS=3
 ```
 
 ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. Optional fallback env vars:
@@ -85,7 +85,6 @@ npm run dev:frontend
 Routes:
 
 - `/` - landing page
-- `/dashboard` - launch readiness cockpit
 - `/audits/new` - new audit generator
 - `/checks` - checks and issues
 - `/report` - launch report and verification loop

@@ -180,8 +180,8 @@ function selectChecksForTestSprite(checks: Check[]): Check[] {
 }
 
 function readMaxPlans() {
-  const parsed = Number(process.env.TESTSPRITE_MAX_PLANS ?? 5);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 12) : 5;
+  const parsed = Number(process.env.TESTSPRITE_MAX_PLANS ?? 3);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 12) : 3;
 }
 
 function severityRank(severity: Severity) {
@@ -237,13 +237,6 @@ function normalizeRunStatus(status: string) {
 }
 
 function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["planSteps"] {
-  if (check.title.toLowerCase().includes("dashboard")) {
-    return [
-      { type: "action", description: `Navigate directly to ${project.url.replace(/\/$/, "")}/dashboard.` },
-      { type: "assertion", description: "Verify the Dashboard page renders a launch gate summary plus visible links to Checks and Report." }
-    ];
-  }
-
   if (check.title.toLowerCase().includes("report export")) {
     return [
       { type: "action", description: `Navigate directly to ${project.url.replace(/\/$/, "")}/report.` },

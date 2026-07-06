@@ -24,7 +24,6 @@ function AppChrome({ children }: { children: React.ReactNode }) {
             </div>
             <SidebarGroup
               items={[
-                ["/dashboard", "▦", "Dashboard"],
                 ["/audits/new", "+", "New Audit"],
                 ["/checks", "☑", "Checks"],
                 ["/report", "◷", "Report"]

@@ -24,7 +24,7 @@ ShipShape is an API-first launch readiness service. The backend answers one prod
 ## Domain Objects
 
 - `Project`: app under launch audit.
-- `Flow`: important user journey such as signup, checkout, contact, onboarding, or dashboard.
+- `Flow`: important user journey such as signup, checkout, contact, onboarding, search, or report export.
 - `Check`: generated launch-readiness check.
 - `Issue`: actionable blocker/warning/polish task, usually created from a failed check.
 - `VerificationRun`: manual, TestSprite, or CI verification event.

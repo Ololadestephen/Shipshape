@@ -37,7 +37,7 @@ Then fetch the selected project detail:
 GET /api/projects/:projectId
 ```
 
-This returns everything needed for the main dashboard:
+This returns everything needed for the checks and report screens:
 
 - `project`
 - `flows`
@@ -59,7 +59,7 @@ POST /api/projects
   "name": "ShipShape",
   "url": "https://shipshape.app",
   "appType": "saas",
-  "flows": ["signup", "login", "dashboard"]
+  "flows": ["signup", "login", "report export"]
 }
 ```
 
@@ -98,7 +98,6 @@ The backend will:
 
 ## Main UI Mapping
 
-- Dashboard metrics: `detail.readiness`
 - Checks table: `detail.checks`
 - Run form: `POST /api/projects/:projectId/runs`
 - Launch report: `GET /api/projects/:projectId/report`
