@@ -14,7 +14,7 @@ Settings:
 
 ```txt
 Runtime: Node
-Build command: npm install && npm run build
+Build command: npm install --include=dev && npm run build
 Start command: npm start
 Health check path: /api/health
 ```
