@@ -56,17 +56,19 @@ export function FormField({
   label,
   value,
   onChange,
-  type = "text"
+  type = "text",
+  required = false
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <label className="form-field">
       <span>{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

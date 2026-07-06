@@ -26,11 +26,12 @@ export function ReportLoop() {
     return <EmptyProjectState error={error} />;
   }
 
-  const latestRun = latestByTime(detail.runs);
+  const currentDetail = detail;
+  const latestRun = latestByTime(currentDetail.runs);
   const latestEvidence = latestRun?.source === "testsprite" ? latestRun.evidence : undefined;
-  const failedChecks = detail.checks.filter((check) => check.status === "failed");
-  const verifiedChecks = detail.checks.filter((check) => check.status === "verified");
-  const untestedChecks = detail.checks.filter((check) => check.status === "untested" || check.status === "fixing");
+  const failedChecks = currentDetail.checks.filter((check) => check.status === "failed");
+  const verifiedChecks = currentDetail.checks.filter((check) => check.status === "verified");
+  const untestedChecks = currentDetail.checks.filter((check) => check.status === "untested" || check.status === "fixing");
   const openBlockers = failedChecks.filter((check) => check.severity === "blocker");
   const nextAction =
     report.verdict === "ready"
@@ -38,7 +39,7 @@ export function ReportLoop() {
       : report.verdict === "blocked"
         ? `Fix ${openBlockers.length || failedChecks.length} failed check${(openBlockers.length || failedChecks.length) === 1 ? "" : "s"}`
         : "Run TestSprite to verify launch checks";
-  const markdown = buildMarkdownReport(detail, report.summary, report.verdict, latestRun);
+  const markdown = buildMarkdownReport(currentDetail, report.summary, report.verdict, latestRun);
 
   async function handleRegenerateReport() {
     setRegenerating(true);
@@ -63,6 +64,18 @@ export function ReportLoop() {
     }
   }
 
+  function exportReport() {
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentDetail.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "shipshape"}-launch-report.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="page-grid report-grid detailed-report-grid">
       <Card className={`verdict-card verdict-${report.verdict}`}>
@@ -77,6 +90,9 @@ export function ReportLoop() {
             </button>
             <button type="button" onClick={() => void copyValue(markdown, "markdown")}>
               {copied === "markdown" ? "Copied" : "Copy Report"}
+            </button>
+            <button type="button" onClick={exportReport}>
+              Export Report
             </button>
           </div>
         </div>

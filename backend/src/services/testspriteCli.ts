@@ -237,20 +237,33 @@ function normalizeRunStatus(status: string) {
 }
 
 function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["planSteps"] {
+  if (check.title.toLowerCase().includes("dashboard")) {
+    return [
+      { type: "action", description: `Navigate directly to ${project.url.replace(/\/$/, "")}/dashboard.` },
+      { type: "assertion", description: "Verify the Dashboard page renders a launch gate summary plus visible links to Checks and Report." }
+    ];
+  }
+
+  if (check.title.toLowerCase().includes("report export")) {
+    return [
+      { type: "action", description: `Navigate directly to ${project.url.replace(/\/$/, "")}/report.` },
+      { type: "assertion", description: "Verify the Report page exposes a visible Export Report or Download report action." }
+    ];
+  }
+
+  if (check.category === "forms") {
+    return [
+      { type: "action", description: `Navigate directly to ${project.url.replace(/\/$/, "")}/audits/new.` },
+      { type: "action", description: "Enter a valid app name and a valid public URL in the Create audit form." },
+      { type: "assertion", description: "Verify Generate is a clickable submit button and pressing Enter from the Live URL field can submit the form." }
+    ];
+  }
+
   const category = check.category.replace(/_/g, " ");
   return [
-    {
-      type: "action",
-      description: `Navigate to ${project.url}.`
-    },
-    {
-      type: "action",
-      description: `Exercise the ${category} behavior related to: ${check.title}.`
-    },
-    {
-      type: "assertion",
-      description: concreteAssertion(check)
-    }
+    { type: "action", description: `Navigate to ${project.url}.` },
+    { type: "action", description: `Exercise the ${category} behavior related to: ${check.title}.` },
+    { type: "assertion", description: concreteAssertion(check) }
   ];
 }
 

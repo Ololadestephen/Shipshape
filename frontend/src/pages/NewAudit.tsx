@@ -6,6 +6,7 @@ import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
 
 const appTypes: AppType[] = ["saas", "ecommerce", "portfolio", "internal_tool", "marketplace", "content", "other"];
+const defaultFlows = ["Dashboard", "Report export", "Forms"];
 const flowOptions = ["Signup", "Login", "Dashboard", "Contact form", "Billing", "Checkout", "Search", "Report export"];
 
 export function NewAudit() {
@@ -14,7 +15,7 @@ export function NewAudit() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [appType, setAppType] = useState<AppType>("saas");
-  const [selectedFlows, setSelectedFlows] = useState<string[]>([]);
+  const [selectedFlows, setSelectedFlows] = useState<string[]>(defaultFlows);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +29,7 @@ export function NewAudit() {
         name,
         url,
         appType,
-        flows: selectedFlows
+        flows: selectedFlows.length > 0 ? selectedFlows : defaultFlows
       });
 
       let linkedDetail = detail;
@@ -62,8 +63,8 @@ export function NewAudit() {
       <PageIntro title="Create audit" />
       <Card className="form-card" title="Project">
         <form onSubmit={handleSubmit}>
-          <FormField label="App name" value={name} onChange={setName} />
-          <FormField label="Live URL" value={url} onChange={setUrl} type="url" />
+          <FormField required label="App name" value={name} onChange={setName} />
+          <FormField required label="Live URL" value={url} onChange={setUrl} type="url" />
           <div className="form-row">
             <label className="form-field">
               <span>App type</span>
@@ -91,7 +92,7 @@ export function NewAudit() {
             </div>
           </div>
           {error && <p className="form-error">{error}</p>}
-          <button className="primary-wide" disabled={submitting || !name || !url || selectedFlows.length === 0}>
+          <button className="primary-wide" disabled={submitting || !name || !url} type="submit">
             {submitting ? "Generating..." : "Generate"}
           </button>
         </form>
