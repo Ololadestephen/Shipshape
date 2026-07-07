@@ -30,7 +30,7 @@ TESTSPRITE_TIMEOUT_SECONDS=900
 TESTSPRITE_MAX_PLANS=3
 ```
 
-Optional:
+For GitHub Actions:
 
 ```txt
 TESTSPRITE_PROJECT_ID=your_project_id

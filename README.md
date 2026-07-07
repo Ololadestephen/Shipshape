@@ -31,7 +31,7 @@ TESTSPRITE_TIMEOUT_SECONDS=900
 TESTSPRITE_MAX_PLANS=3
 ```
 
-ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. Optional fallback env vars:
+ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. GitHub Actions can use:
 
 ```bash
 TESTSPRITE_PROJECT_ID=your_project_id

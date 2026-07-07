@@ -259,18 +259,19 @@ export class ShipShapeService {
   async runTestSprite(projectId: string) {
     const project = this.ensureProject(projectId);
     const config = readTestSpriteConfig();
-    const testspriteProjectId = project.testspriteProjectId?.trim() || config.projectId;
+    const testspriteProjectId = project.testspriteProjectId?.trim();
     if (!config.apiKey || (!testspriteProjectId && !config.testId)) {
       throw new HttpError(
         400,
-        "Set TESTSPRITE_API_KEY and connect a TestSprite project before running TestSprite.",
+        "Create or save a TestSprite project for this audit before running TestSprite.",
         "TESTSPRITE_CONFIG_MISSING"
       );
     }
 
+    const cliProjectId = testspriteProjectId ?? config.projectId;
     let commandResult;
     try {
-      commandResult = await runTestSpriteCli(project, this.store.listChecks(projectId), { ...config, projectId: testspriteProjectId });
+      commandResult = await runTestSpriteCli(project, this.store.listChecks(projectId), { ...config, projectId: cliProjectId });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to start TestSprite CLI";
       throw new HttpError(502, `Unable to run TestSprite CLI: ${message}`, "TESTSPRITE_CLI_FAILED");
@@ -292,18 +293,17 @@ export class ShipShapeService {
     const project = this.ensureProject(projectId);
     const config = readTestSpriteConfig();
     const projectIdFromProject = project.testspriteProjectId?.trim();
-    const projectIdFromEnv = config.projectId.trim();
     const testIdFromEnv = config.testId?.trim();
 
     return {
       apiKeyConfigured: Boolean(config.apiKey),
       cliBin: config.cliBin,
       timeoutSeconds: config.timeoutSeconds,
-      projectId: projectIdFromProject || projectIdFromEnv || undefined,
-      projectIdSource: projectIdFromProject ? "project" : projectIdFromEnv ? "env" : "none",
+      projectId: projectIdFromProject || undefined,
+      projectIdSource: projectIdFromProject ? "project" : "none",
       testIdConfigured: Boolean(testIdFromEnv),
       targetUrl: project.testspriteProjectUrl ?? project.url,
-      readyToRun: Boolean(config.apiKey && (projectIdFromProject || projectIdFromEnv || testIdFromEnv))
+      readyToRun: Boolean(config.apiKey && (projectIdFromProject || testIdFromEnv))
     };
   }
 

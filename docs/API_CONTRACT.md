@@ -136,7 +136,7 @@ Failed run results update the related check, create/update an issue, and append 
 
 `POST /projects/:projectId/testsprite/run`
 
-Runs the real TestSprite CLI with `TESTSPRITE_API_KEY`, parses `--output json`, creates a TestSprite verification run, and applies results to checks/issues. ShipShape uses the project's saved `testspriteProjectId` first, then falls back to `TESTSPRITE_PROJECT_ID`.
+Runs the real TestSprite CLI with `TESTSPRITE_API_KEY`, parses `--output json`, creates a TestSprite verification run, and applies results to checks/issues. ShipShape uses the audit's saved `testspriteProjectId`; this keeps each audit from accidentally reusing another TestSprite project.
 
 ```json
 {
