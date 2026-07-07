@@ -879,6 +879,30 @@ td {
   padding: 0 16px;
 }
 
+.report-actions button {
+  box-shadow: 0 10px 22px rgba(38, 107, 64, 0.14);
+  transition:
+    box-shadow 140ms ease,
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.report-actions button:hover {
+  box-shadow: 0 14px 30px rgba(38, 107, 64, 0.2);
+  transform: translateY(-1px);
+}
+
+.report-action-primary {
+  background: linear-gradient(135deg, #2f7d4a, #25663c) !important;
+  min-width: 126px;
+}
+
+.report-action-secondary {
+  background: #fff !important;
+  border: 1px solid #d8e2db !important;
+  color: #2f6945 !important;
+}
+
 .report-regenerate {
   margin-top: 6px;
   width: 100%;
@@ -1073,6 +1097,12 @@ td {
 .empty-state {
   color: var(--muted);
   line-height: 1.6;
+}
+
+.public-report-page {
+  max-width: 1040px;
+  padding-bottom: 56px;
+  padding-top: 36px;
 }
 
 @media (max-width: 1280px) {

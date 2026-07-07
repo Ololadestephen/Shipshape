@@ -133,6 +133,27 @@ describe("verification runs", () => {
 
     expect(service.generateReport(project.id).verdict).toBe("ready");
   });
+
+  it("reuses a fresh report snapshot and regenerates after project changes", () => {
+    const service = new ShipShapeService(new MemoryStore());
+    const project = service.createProject({
+      name: "Demo",
+      url: "https://example.com",
+      appType: "saas",
+      flows: ["Signup"]
+    }).project;
+    const check = service.listChecks(project.id)[0];
+
+    const firstReport = service.getOrGenerateReport(project.id);
+    const secondReport = service.getOrGenerateReport(project.id);
+
+    expect(secondReport.id).toBe(firstReport.id);
+
+    service.updateCheck(check.id, { status: "verified" });
+    const refreshedReport = service.getOrGenerateReport(project.id);
+
+    expect(refreshedReport.id).not.toBe(firstReport.id);
+  });
 });
 
 describe("TestSprite result mapping", () => {

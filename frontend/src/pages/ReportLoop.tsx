@@ -4,7 +4,7 @@ import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
 import type { Check, LoopEntry, ProjectDetail, VerificationRun } from "../api";
 
-export function ReportLoop() {
+export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
   const { detail, report, loading, error, regenerateReport } = useProjectData();
   const [regenerating, setRegenerating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function ReportLoop() {
       return "";
     }
 
-    return `${window.location.origin}/report?project=${detail.project.id}`;
+    return `${window.location.origin}/share/${encodeURIComponent(detail.project.id)}`;
   }, [detail]);
 
   if (loading) {
@@ -71,8 +71,8 @@ export function ReportLoop() {
   }
 
   return (
-    <div className="report-document-page">
-      <PageIntro title="Launch report" />
+    <div className={`report-document-page ${publicView ? "public-report-page" : ""}`}>
+      <PageIntro title={publicView ? "Shared launch report" : "Launch report"} />
       <article className="report-document">
         <header className={`report-cover verdict-${report.verdict}`}>
           <div>
@@ -81,13 +81,13 @@ export function ReportLoop() {
             <p>{decision}</p>
           </div>
           <div className="report-actions">
-            <button type="button" onClick={() => void copyValue(shareUrl, "share link")}>
+            <button className="report-action-primary" type="button" onClick={() => void copyValue(shareUrl, "share link")}>
               {copied === "share link" ? "Copied" : "Share Link"}
             </button>
-            <button type="button" onClick={() => void copyValue(markdown, "markdown")}>
+            <button className="report-action-secondary" type="button" onClick={() => void copyValue(markdown, "markdown")}>
               {copied === "markdown" ? "Copied" : "Copy Report"}
             </button>
-            <button type="button" onClick={exportReport}>
+            <button className="report-action-secondary" type="button" onClick={exportReport}>
               Export Report
             </button>
           </div>
@@ -109,9 +109,11 @@ export function ReportLoop() {
             Latest TestSprite run: <strong>{latestRun ? formatValue(latestRun.status) : "No run"}</strong>
             {latestRun ? `, ${latestRun.summary}` : "."}
           </p>
-          <button className="report-regenerate" disabled={regenerating} onClick={() => void handleRegenerateReport()}>
-            {regenerating ? "Regenerating..." : "Regenerate Report"}
-          </button>
+          {!publicView && (
+            <button className="report-regenerate" disabled={regenerating} onClick={() => void handleRegenerateReport()}>
+              {regenerating ? "Regenerating..." : "Regenerate Report"}
+            </button>
+          )}
         </section>
 
         <section className="report-section">

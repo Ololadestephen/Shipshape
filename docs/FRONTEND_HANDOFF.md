@@ -101,6 +101,7 @@ The backend will:
 - Checks table: `detail.checks`
 - Run form: `POST /api/projects/:projectId/runs`
 - Launch report: `GET /api/projects/:projectId/report`
+- Public report: `/share/:projectId`
 
 ## Status Colors
 

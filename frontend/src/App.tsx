@@ -4,11 +4,20 @@ import { ChecksIssues } from "./pages/ChecksIssues";
 import { Landing } from "./pages/Landing";
 import { NewAudit } from "./pages/NewAudit";
 import { ReportLoop } from "./pages/ReportLoop";
+import { ProjectProvider } from "./projectContext";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route
+        path="/share/:projectId"
+        element={
+          <ProjectProvider>
+            <ReportLoop publicView />
+          </ProjectProvider>
+        }
+      />
       <Route
         path="/audits/new"
         element={

@@ -88,6 +88,7 @@ Routes:
 - `/audits/new` - new audit generator
 - `/checks` - checks and issues
 - `/report` - launch report and verification loop
+- `/share/:projectId` - public shareable launch report
 
 The frontend is wired to the backend for project data, checklist updates, issue status changes, verification runs, and report regeneration.
 

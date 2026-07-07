@@ -214,6 +214,11 @@ export class MemoryStore {
     return this.commit(report);
   }
 
+  clearReports(projectId: string): void {
+    this.state.reports = this.state.reports.filter((report) => report.projectId !== projectId);
+    this.commit(undefined);
+  }
+
   getLatestReport(projectId: string): LaunchReport | undefined {
     return this.state.reports
       .filter((report) => report.projectId === projectId)

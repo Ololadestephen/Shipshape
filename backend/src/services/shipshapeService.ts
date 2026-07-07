@@ -114,6 +114,7 @@ export class ShipShapeService {
       throw notFound("Project not found");
     }
 
+    this.store.clearReports(projectId);
     return this.getProjectDetailOrThrow(projectId);
   }
 
@@ -166,6 +167,7 @@ export class ShipShapeService {
   generateChecklist(projectId: string, replaceExisting: boolean) {
     const project = this.ensureProject(projectId);
     const checks = generateChecks(projectId, project.appType, this.store.listFlows(projectId));
+    this.store.clearReports(projectId);
     return replaceExisting ? this.store.replaceChecks(projectId, checks) : this.store.addChecks(checks);
   }
 
@@ -368,7 +370,7 @@ export class ShipShapeService {
 
   getOrGenerateReport(projectId: string) {
     this.ensureProject(projectId);
-    return this.generateReport(projectId);
+    return this.store.getLatestReport(projectId) ?? this.generateReport(projectId);
   }
 
   generateReport(projectId: string) {
@@ -517,6 +519,7 @@ export class ShipShapeService {
   private refreshProjectStatus(projectId: string) {
     const readiness = this.store.getReadiness(projectId);
     const status: ProjectStatus = readiness.status;
+    this.store.clearReports(projectId);
     this.store.updateProject(projectId, {
       status,
       updatedAt: nowIso()

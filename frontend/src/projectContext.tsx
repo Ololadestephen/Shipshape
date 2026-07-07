@@ -25,6 +25,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
+      const directProjectId = readProjectIdFromLocation();
+      if (directProjectId) {
+        const [nextDetail, nextReport] = await Promise.all([getProject(directProjectId), getProjectReport(directProjectId)]);
+        setDetail(nextDetail);
+        setReport(nextReport);
+        return;
+      }
+
       const projects = await listProjects();
       if (projects.length === 0) {
         setDetail(null);
@@ -104,4 +112,13 @@ export function useProjectData() {
   }
 
   return value;
+}
+
+function readProjectIdFromLocation() {
+  const shareMatch = window.location.pathname.match(/^\/share\/([^/?#]+)/);
+  if (shareMatch?.[1]) {
+    return decodeURIComponent(shareMatch[1]);
+  }
+
+  return new URLSearchParams(window.location.search).get("project");
 }
