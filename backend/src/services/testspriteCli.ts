@@ -252,6 +252,18 @@ function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["pla
     ];
   }
 
+  if (check.category === "mobile") {
+    return [
+      { type: "action", description: `Open ${project.url} with a 390px wide mobile viewport.` },
+      { type: "action", description: "Scroll the first screen and interact with the primary visible navigation or call-to-action controls." },
+      {
+        type: "assertion",
+        description:
+          "Pass only if no horizontal scrolling is required, text is readable, controls are not clipped or overlapping, and the primary actions remain tappable."
+      }
+    ];
+  }
+
   const category = check.category.replace(/_/g, " ");
   return [
     { type: "action", description: `Navigate to ${project.url}.` },
@@ -263,7 +275,7 @@ function buildPlanSteps(project: Project, check: Check): TestSpritePlanSpec["pla
 function concreteAssertion(check: Check) {
   const assertions: Record<string, string> = {
     navigation: "Verify the primary navigation exposes working links to the main launch-critical pages without dead ends.",
-    mobile: "Verify the page remains readable and the primary controls are tappable in a narrow mobile viewport.",
+    mobile: "Verify there is no horizontal overflow, clipped text, overlapping controls, or untappable primary action in a 390px wide viewport.",
     forms: "Verify required form fields show clear validation feedback and a visible success or error state.",
     accessibility: "Verify interactive buttons, links, and form controls expose clear accessible names and visible focus states.",
     error_states: "Verify an empty or invalid state explains what happened and gives the user a next action.",

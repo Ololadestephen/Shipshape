@@ -294,15 +294,16 @@ a {
 }
 
 .org span {
-  background: var(--brown);
+  background: #fff;
+  border: 1px solid #d9ded9;
   border-radius: 9px;
-  color: #fff;
   display: grid;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
-  height: 28px;
+  height: 34px;
+  line-height: 1;
   place-items: center;
-  width: 28px;
+  width: 34px;
 }
 
 .sidebar-group {
