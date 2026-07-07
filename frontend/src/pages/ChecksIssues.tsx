@@ -303,7 +303,7 @@ function failureCause(check: Check, issue?: Issue) {
   }
 
   const causes: Record<string, string> = {
-    mobile: "TestSprite found a small-screen usability failure. The likely issue is overflow, cramped tap targets, or content that is not adapting at mobile widths.",
+    mobile: "TestSprite's 390px mobile run failed. Treat this as a layout/tap-target bug until the deployed page has no horizontal scroll, clipped text, overlapping controls, or blocked primary actions.",
     forms: "TestSprite could not complete the form path reliably. The likely issue is submit behavior, validation feedback, or a disabled/missing interactive control.",
     navigation: "TestSprite reached a UI control or route that did not produce the expected page/content transition.",
     ci_cd: "TestSprite could not find a current release-gate signal tied to the latest verification run.",
@@ -316,7 +316,7 @@ function failureCause(check: Check, issue?: Issue) {
 
 function fixSummary(check: Check) {
   const summaries: Record<string, string> = {
-    mobile: "Fix responsive spacing, tap targets, and overflow for narrow viewports.",
+    mobile: "Make the deployed page pass a 390px viewport check: no horizontal scroll, no clipping, no overlap, and tappable primary actions.",
     accessibility: "Add accessible names, focus states, and keyboard-safe controls.",
     forms: "Tighten validation, empty states, and success/error feedback.",
     auth: "Check auth redirects, failed login states, and post-login landing behavior.",
@@ -332,10 +332,11 @@ function fixPlan(check: Check, issue?: Issue) {
   const evidence = issue?.actual ?? failureCause(check, issue);
   const plans: Record<string, string[]> = {
     mobile: [
-      "Open the deployed app at 390px and 768px widths and reproduce the failing screen.",
-      "Fix horizontal overflow first, then check tap target spacing, sticky headers, and controls near the viewport edges.",
-      "Use responsive CSS constraints such as max-width, wrapping, grid fallbacks, and stable button heights.",
-      "Rerun the Mobile TestSprite check and confirm the failure changes to verified."
+      "Open the deployed URL in responsive mode at 390px width, then test the landing page, Checks page, and Report page.",
+      "Remove any horizontal scrolling. In DevTools, `document.documentElement.scrollWidth` should equal `window.innerWidth` or be within 1px.",
+      "Check the top bar, sidebar/header, table, TestSprite setup controls, and failure card. They must wrap or stack instead of overflowing.",
+      "Make every primary action at least 44px tall with enough spacing: Start Audit, New Audit, Run TestSprite, Create Fix Plan, Share Link, Export Report.",
+      "Retest at 390px and 768px, then rerun TestSprite. If it still fails, use the newest failure text as the next fix target."
     ],
     forms: [
       "Open the exact form path on the deployed URL and test both mouse click and Enter-key submission.",

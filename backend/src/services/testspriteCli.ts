@@ -207,6 +207,7 @@ function readBatchRunResults(payload: unknown): Array<Record<string, unknown>> {
 function resultFromBatchItem(item: Record<string, unknown>, check?: Check) {
   const rawStatus = typeof item.status === "string" ? item.status : "";
   const status = normalizeRunStatus(rawStatus);
+  const fallbackMessage = messageForCheckStatus(check, status);
   return {
     name: check?.title ?? readString(item, "testId") ?? "TestSprite frontend plan",
     status,
@@ -214,13 +215,21 @@ function resultFromBatchItem(item: Record<string, unknown>, check?: Check) {
       status === "passed"
         ? `${check?.title ?? "TestSprite frontend plan"} passed in a fresh TestSprite run.`
         : status === "failed"
-          ? readMessage(item) ?? `${check?.title ?? "TestSprite frontend plan"} failed in a fresh TestSprite run.`
+          ? readMessage(item) ?? fallbackMessage
           : `${check?.title ?? "TestSprite frontend plan"} did not finish before the TestSprite wait timeout.`,
     evidenceUrl: readTargetUrl(item),
     testId: readString(item, "testId"),
     runId: readString(item, "runId"),
     run: item
   };
+}
+
+function messageForCheckStatus(check: Check | undefined, status: "passed" | "failed" | "skipped") {
+  if (status !== "failed" || check?.category !== "mobile") {
+    return `${check?.title ?? "TestSprite frontend plan"} failed in a fresh TestSprite run.`;
+  }
+
+  return "The 390px mobile run failed. Check for horizontal scrolling, clipped text, overlapping controls, sticky header collisions, or primary actions that cannot be tapped.";
 }
 
 function normalizeRunStatus(status: string) {
