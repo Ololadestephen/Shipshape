@@ -1,0 +1,25 @@
+{
+  "projectId": "c78831c7-f9da-48b0-8af2-436e762d18cb",
+  "type": "frontend",
+  "name": "Create a launch audit from a public URL",
+  "description": "A release owner can start an audit for ShipShape, enter a bare public domain, and reach the checks workspace.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Open https://shipshape-pi.vercel.app/ and choose Start Audit."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the app navigates to the Create audit screen and exposes App name, Live URL, and Generate controls."
+    },
+    {
+      "type": "action",
+      "description": "Enter ShipShape demo as the app name and example.com as the Live URL, then submit Generate."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the submitted target is normalized to https://example.com and the user reaches the checks workspace without a blank or stuck state."
+    }
+  ]
+}
