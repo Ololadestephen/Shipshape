@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { ProjectProvider, useProjectData } from "../projectContext";
+import { LogoMark } from "./LogoMark";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function AppChrome({ children }: { children: React.ReactNode }) {
   const { detail } = useProjectData();
   const projectName = detail?.project.name ?? "ShipShape";
-  const projectEmoji = emojiForProject(detail?.project.appType);
 
   return (
     <div className="app">
@@ -20,7 +20,9 @@ function AppChrome({ children }: { children: React.ReactNode }) {
         <section className="workspace-frame">
           <aside className="workspace-sidebar">
             <div className="org">
-              <span>{projectEmoji}</span>
+              <span className="org-mark" aria-hidden="true">
+                <LogoMark />
+              </span>
               <strong>{projectName}</strong>
             </div>
             <SidebarGroup
@@ -45,20 +47,6 @@ function AppChrome({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   );
-}
-
-function emojiForProject(appType?: string) {
-  const emojis: Record<string, string> = {
-    saas: "🚀",
-    ecommerce: "🛍️",
-    portfolio: "✨",
-    internal_tool: "🛠️",
-    marketplace: "🧭",
-    content: "📝",
-    other: "✅"
-  };
-
-  return emojis[appType ?? ""] ?? "🚢";
 }
 
 function SidebarGroup({ items }: { items: Array<[string, string, string]> }) {

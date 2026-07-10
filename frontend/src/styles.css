@@ -293,17 +293,22 @@ a {
   padding: 0 6px;
 }
 
-.org span {
-  background: #fff;
-  border: 1px solid #d9ded9;
-  border-radius: 9px;
+.org-mark {
+  align-items: center;
+  background: #2f7d4a;
+  border-radius: 8px;
+  color: #fff;
   display: grid;
-  font-size: 18px;
-  font-weight: 600;
+  flex: 0 0 34px;
   height: 34px;
-  line-height: 1;
-  place-items: center;
+  justify-content: center;
   width: 34px;
+}
+
+.org-mark .logo-mark {
+  color: currentColor;
+  height: 22px;
+  width: 22px;
 }
 
 .sidebar-group {
