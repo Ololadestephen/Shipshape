@@ -1,6 +1,64 @@
 # ShipShape
 
-ShipShape turns real TestSprite runs into a launch decision. It tracks projects, critical flows, launch checks, issues, verification runs, evidence quality, reports, and loop entries.
+**Turn TestSprite evidence into a confident ship/no-ship decision.**
+
+[Live demo](https://shipshape-pi.vercel.app/) · [TestSprite CI gate](https://github.com/Ololadestephen/Shipshape/actions/workflows/testsprite.yml) · [The loop](LOOP.md)
+
+Most teams can tell you that their CI is green. Far fewer can answer the launch question: **what did we verify, what broke, what changed, and are we actually ready to ship?**
+
+ShipShape is a launch-readiness workspace built around a real TestSprite loop. It turns a deployed URL into launch-critical checks, executes TestSprite against that live target, turns evidence into failures and practical remediation, then publishes a clear release report anyone can share.
+
+## The Loop
+
+```text
+Create audit -> TestSprite verifies live app -> ShipShape explains impact
+     ^                                                |
+     |                                                v
+Rerun after fix <- make the change <- fix plan + evidence
+```
+
+1. Add a deployed app and its critical flows.
+2. ShipShape creates a project-specific TestSprite project and launch checklist.
+3. Run a focused TestSprite verification against the public URL.
+4. Review direct evidence, failed checks, and a concrete fix plan.
+5. Rerun after the fix and share an evidence-backed launch report.
+
+## Why It Is Different
+
+| Instead of | ShipShape gives you |
+| --- | --- |
+| A generic green CI badge | A launch verdict with the evidence behind it |
+| One reusable test project | A dedicated TestSprite project per audit |
+| A vague test failure | A mapped check, issue, and practical next fix |
+| A private dashboard | A public, shareable release report |
+| Disappearing demo state | Supabase-backed audit and verification history |
+
+## Built for the TestSprite Season 3 Loop
+
+- Uses the real TestSprite CLI, never simulated results.
+- Creates fresh frontend test plans from the highest-risk launch checks.
+- Records mapping quality: direct results, matched checks, inferred checks, exit code, and evidence URLs.
+- Keeps an agent-written [LOOP.md](LOOP.md) of write -> verify -> fix -> verify iterations.
+- Wires TestSprite into [GitHub Actions](.github/workflows/testsprite.yml) on pushes, pull requests, and manual runs.
+
+## Product Surface
+
+| Surface | What it does |
+| --- | --- |
+| Create audit | Captures a live URL, app type, and critical user flows. Bare domains are normalized to `https://`. |
+| Checks | Shows launch checks, TestSprite connection state, evidence, failures, and editable check status. |
+| Fix plan | Converts a failed check into concrete investigation, repair, and rerun steps. |
+| Report | Produces a ship/no-ship verdict, evidence summary, export, copy, and public share link. |
+| CI gate | Reruns the dedicated ShipShape TestSprite test from GitHub Actions. |
+
+## Stack
+
+- Frontend: React, TypeScript, Vite
+- Backend: Express, TypeScript
+- Persistence: Supabase Postgres
+- Verification: TestSprite CLI
+- Deployment: Vercel frontend + Render backend
+- Coding agent: OpenAI Codex
 
 ## Run Locally
 
@@ -9,100 +67,60 @@ npm install
 npm run dev
 ```
 
-The API starts on `http://localhost:6333` by default.
+The API starts on `http://localhost:6333`. Run the frontend separately with:
 
-Backend state is persisted to Supabase/Postgres when `DATABASE_URL` is configured. Local development falls back to `.shipshape/shipshape-state.json`.
+```bash
+npm run dev:frontend
+```
 
-## TestSprite Integration
+Copy `.env.example` to `.env` and configure:
 
-ShipShape runs the real TestSprite CLI from the backend. The CLI is included as a production dependency for deployment. For local CLI use, run:
+```bash
+DATABASE_URL=postgresql://...
+TESTSPRITE_API_KEY=sk_...
+TESTSPRITE_CLI_BIN=testsprite
+TESTSPRITE_TIMEOUT_SECONDS=900
+TESTSPRITE_MAX_PLANS=1
+```
+
+`DATABASE_URL` uses Supabase's Session Pooler connection string in production. Without it, local development falls back to `.shipshape/shipshape-state.json`.
+
+## TestSprite Setup
+
+Install and onboard the CLI:
 
 ```bash
 npm install -g @testsprite/testsprite-cli
 testsprite setup
 ```
 
-Then add these environment variables:
+ShipShape automatically creates and saves a TestSprite project ID for every audit. Clicking **Run TestSprite** creates a fresh focused plan for the highest-risk check and runs it against the audit's public target. Set `TESTSPRITE_MAX_PLANS` higher when you want broader coverage.
 
-```bash
-TESTSPRITE_API_KEY=sk_...
-DATABASE_URL=postgresql://...
-TESTSPRITE_CLI_BIN=testsprite
-TESTSPRITE_TIMEOUT_SECONDS=900
-TESTSPRITE_MAX_PLANS=1
-```
+For the CI gate, add these GitHub repository settings:
 
-ShipShape creates and stores a TestSprite project id per audit automatically when the audit is created. You can still edit the id from the Checks screen. GitHub Actions can use:
+- Secret: `TESTSPRITE_API_KEY`
+- Variable: `TESTSPRITE_PROJECT_ID`
 
-```bash
-TESTSPRITE_PROJECT_ID=your_project_id
-TESTSPRITE_TEST_ID=test_...
-```
-
-After deployment, click `Create Project` in ShipShape or run:
-
-```bash
-testsprite --output json project create --type frontend --name ShipShape --url https://your-public-url.example
-```
-
-When you click `Run TestSprite`, ShipShape generates a fresh frontend TestSprite plan from the highest-risk audit check, runs it against the public target URL, then maps the returned result into the launch gate. This focused proof run is intentionally quick; set `TESTSPRITE_MAX_PLANS` higher when you want broader coverage. Checks and Report show the evidence shape for each run: CLI exit code, result item count, matched checks, inferred checks, and any report URL returned by TestSprite.
-
-## CI/CD Gate
-
-The repo includes `.github/workflows/testsprite.yml` for the hackathon CI/CD bonus. Add these in GitHub:
-
-- Repository secret: `TESTSPRITE_API_KEY`
-- Repository variable: `TESTSPRITE_PROJECT_ID`
-
-The workflow runs TestSprite on pushes to `main`, pull requests, and manual dispatch.
-
-## Useful Endpoints
-
-- `GET /api/health`
-- `GET /api/projects`
-- `POST /api/projects`
-- `GET /api/projects/:projectId`
-- `POST /api/projects/:projectId/generate-checklist`
-- `POST /api/projects/:projectId/runs`
-- `GET /api/projects/:projectId/testsprite/setup`
-- `POST /api/projects/:projectId/testsprite/project`
-- `POST /api/projects/:projectId/testsprite/run`
-- `GET /api/projects/:projectId/report`
-- `GET /api/projects/:projectId/loop`
-
-See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for the full frontend contract.
-See [docs/FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md) for the Stitch integration map.
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Render and Vercel setup.
-See [LOOP.md](LOOP.md) for the hackathon loop narrative.
-
-## Frontend Routes
-
-Run the React frontend with:
-
-```bash
-npm run dev:frontend
-```
-
-Routes:
-
-- `/` - landing page
-- `/audits/new` - new audit generator
-- `/checks` - checks and issues
-- `/report` - launch report and verification loop
-- `/share/:projectId` - public shareable launch report
-
-The frontend is wired to the backend for project data, checklist updates, issue status changes, verification runs, and report regeneration.
-
-## Backend Plan
-
-See [docs/BACKEND_PLAN.md](docs/BACKEND_PLAN.md).
+The workflow is defined in [.github/workflows/testsprite.yml](.github/workflows/testsprite.yml).
 
 ## Deploy
 
-Recommended setup:
+- Vercel: deploy `frontend` and set `VITE_API_BASE_URL` to the Render backend URL.
+- Render: deploy from the repository root and set `DATABASE_URL` plus `TESTSPRITE_API_KEY`.
 
-- Backend on Render from the repository root.
-- Frontend on Vercel from `frontend`.
-- Set `VITE_API_BASE_URL` on Vercel to the Render backend URL.
+Configuration files are included: [render.yaml](render.yaml) and [frontend/vercel.json](frontend/vercel.json).
 
-The repo includes `render.yaml` and `frontend/vercel.json`.
+## Routes and Docs
+
+- `/` - landing page
+- `/audits/new` - create an audit
+- `/checks` - verification workspace
+- `/report` - release report
+- `/share/:projectId` - public report link
+
+Read the supporting docs:
+
+- [LOOP.md](LOOP.md) - the agent-written verification history
+- [Deployment guide](docs/DEPLOYMENT.md)
+- [API contract](docs/API_CONTRACT.md)
+- [Backend plan](docs/BACKEND_PLAN.md)
