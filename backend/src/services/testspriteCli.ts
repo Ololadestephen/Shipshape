@@ -180,8 +180,8 @@ function selectChecksForTestSprite(checks: Check[]): Check[] {
 }
 
 function readMaxPlans() {
-  const parsed = Number(process.env.TESTSPRITE_MAX_PLANS ?? 3);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 12) : 3;
+  const parsed = Number(process.env.TESTSPRITE_MAX_PLANS ?? 1);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), 12) : 1;
 }
 
 function severityRank(severity: Severity) {

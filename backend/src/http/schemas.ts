@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+const publicUrlSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed && !/^[a-z][a-z\d+.-]*:\/\//i.test(trimmed) ? `https://${trimmed}` : trimmed;
+  },
+  z.string().trim().url()
+);
+
 export const appTypeSchema = z.enum(["saas", "ecommerce", "portfolio", "internal_tool", "marketplace", "content", "other"]);
 export const projectStatusSchema = z.enum(["draft", "testing", "blocked", "ready_with_warnings", "ready"]);
 export const flowPrioritySchema = z.enum(["critical", "important", "nice_to_have"]);
@@ -13,22 +25,22 @@ export const loopKindSchema = z.enum(["failure", "fix", "verification", "note"])
 
 export const createProjectSchema = z.object({
   name: z.string().trim().min(1),
-  url: z.string().trim().url(),
+  url: publicUrlSchema,
   appType: appTypeSchema,
   flows: z.array(z.string().trim().min(1)).optional()
 });
 
 export const updateProjectSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  url: z.string().trim().url().optional(),
+  url: publicUrlSchema.optional(),
   appType: appTypeSchema.optional(),
   status: projectStatusSchema.optional(),
   testspriteProjectId: z.string().trim().optional(),
-  testspriteProjectUrl: z.string().trim().url().optional()
+  testspriteProjectUrl: publicUrlSchema.optional()
 });
 
 export const createTestSpriteProjectSchema = z.object({
-  targetUrl: z.string().trim().url().optional()
+  targetUrl: publicUrlSchema.optional()
 });
 
 export const createFlowSchema = z.object({

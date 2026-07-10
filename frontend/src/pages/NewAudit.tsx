@@ -20,13 +20,15 @@ export function NewAudit() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const normalizedUrl = normalizePublicUrl(url);
+    setUrl(normalizedUrl);
     setSubmitting(true);
     setError(null);
 
     try {
       const detail = await createProject({
         name,
-        url,
+        url: normalizedUrl,
         appType,
         flows: selectedFlows
       });
@@ -57,13 +59,24 @@ export function NewAudit() {
     setSelectedFlows((current) => (current.includes(flow) ? current.filter((item) => item !== flow) : [...current, flow]));
   }
 
+  function handleUrlBlur() {
+    setUrl(normalizePublicUrl(url));
+  }
+
   return (
     <div className="page-grid audit-grid">
       <PageIntro title="Create audit" />
       <Card className="form-card" title="Project">
         <form onSubmit={handleSubmit}>
           <FormField required label="App name" value={name} onChange={setName} />
-          <FormField required label="Live URL" value={url} onChange={setUrl} type="url" />
+          <FormField
+            required
+            label="Live URL"
+            value={url}
+            onBlur={handleUrlBlur}
+            onChange={setUrl}
+            type="text"
+          />
           <div className="form-row">
             <label className="form-field">
               <span>App type</span>
@@ -98,4 +111,13 @@ export function NewAudit() {
       </Card>
     </div>
   );
+}
+
+function normalizePublicUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed || /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
 }

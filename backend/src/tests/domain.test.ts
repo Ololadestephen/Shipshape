@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generateChecks } from "../domain/checklistGenerator.js";
 import { calculateReadiness, generateLaunchReport } from "../domain/readiness.js";
 import { ShipShapeService } from "../services/shipshapeService.js";
+import { createProjectSchema } from "../http/schemas.js";
 import { buildCreateProjectArgs, buildTestSpriteArgs, buildTestSpritePlanSpecs, readTestSpriteProjectId } from "../services/testspriteCli.js";
 import { mapTestSpriteOutput } from "../services/testspriteMapper.js";
 import { MemoryStore } from "../storage/memoryStore.js";
@@ -25,6 +26,18 @@ describe("checklist generation", () => {
     expect(checks.some((check) => check.category === "auth")).toBe(true);
     expect(checks.some((check) => check.flowId === flow.id)).toBe(true);
     expect(checks.every((check) => check.status === "untested")).toBe(true);
+  });
+});
+
+describe("project URL input", () => {
+  it("adds https to a bare public domain", () => {
+    const input = createProjectSchema.parse({
+      name: "Demo",
+      url: "example.com",
+      appType: "saas"
+    });
+
+    expect(input.url).toBe("https://example.com");
   });
 });
 

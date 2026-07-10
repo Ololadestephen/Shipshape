@@ -15,5 +15,7 @@ services:
         value: testsprite
       - key: TESTSPRITE_TIMEOUT_SECONDS
         value: "900"
+      - key: TESTSPRITE_MAX_PLANS
+        value: "1"
       - key: TESTSPRITE_API_KEY
         sync: false
