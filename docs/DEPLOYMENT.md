@@ -25,6 +25,7 @@ Environment variables:
 NODE_ENV=production
 SHIPSHAPE_DATA_FILE=/tmp/shipshape-state.json
 TESTSPRITE_API_KEY=your_testsprite_key
+DATABASE_URL=your_supabase_postgres_connection_string
 TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
 TESTSPRITE_MAX_PLANS=3

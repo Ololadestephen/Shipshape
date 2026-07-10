@@ -9,8 +9,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SHIPSHAPE_DATA_FILE
-        value: /tmp/shipshape-state.json
+      - key: DATABASE_URL
+        sync: false
       - key: TESTSPRITE_CLI_BIN
         value: testsprite
       - key: TESTSPRITE_TIMEOUT_SECONDS

@@ -4,9 +4,9 @@ import { createApiRouter } from "./http/routes.js";
 import { ShipShapeService } from "./services/shipshapeService.js";
 import { createPersistentStore } from "./storage/persistentStore.js";
 
-export function createApp() {
+export async function createApp() {
   const app = express();
-  const store = createPersistentStore();
+  const store = await createPersistentStore();
   const service = new ShipShapeService(store);
 
   app.use(cors());

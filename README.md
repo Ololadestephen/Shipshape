@@ -11,7 +11,7 @@ npm run dev
 
 The API starts on `http://localhost:6333` by default.
 
-Backend state is persisted to `.shipshape/shipshape-state.json` by default. Override it with `SHIPSHAPE_DATA_FILE`.
+Backend state is persisted to Supabase/Postgres when `DATABASE_URL` is configured. Local development falls back to `.shipshape/shipshape-state.json`.
 
 ## TestSprite Integration
 
@@ -26,6 +26,7 @@ Then add these environment variables:
 
 ```bash
 TESTSPRITE_API_KEY=sk_...
+DATABASE_URL=postgresql://...
 TESTSPRITE_CLI_BIN=testsprite
 TESTSPRITE_TIMEOUT_SECONDS=900
 TESTSPRITE_MAX_PLANS=1
