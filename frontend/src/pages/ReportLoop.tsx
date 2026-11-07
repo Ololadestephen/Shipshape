@@ -182,7 +182,7 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
       await switchToBotChain();
       setChainId(BOT_CHAIN_ID);
     } catch (caught: any) {
-      setActionError(caught?.message ?? "Unable to switch network to BOT Chain");
+      setActionError(caught?.message ?? "Unable to switch network to BOT Chain Mainnet");
     }
   }
 
@@ -230,10 +230,10 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
         snapshot: snapshotData.snapshot
       });
 
-      setPublishSuccess(`Report v${snapshotData.nextVersion} confirmed on BOT Chain!`);
+      setPublishSuccess(`Report v${snapshotData.nextVersion} confirmed on BOT Chain Mainnet!`);
       await refresh();
     } catch (caught: any) {
-      setActionError(caught?.message ?? "Failed to publish report to BOT Chain");
+      setActionError(caught?.message ?? "Failed to publish report to BOT Chain Mainnet");
     } finally {
       setPublishing(false);
       setPublishStatus(null);
@@ -371,7 +371,7 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
         {/* Blockchain Publication Receipt */}
         {latestPublication && (
           <section className="report-section">
-            <h2>BOT Chain Publication Receipt</h2>
+            <h2>BOT Chain Mainnet Publication Receipt</h2>
             <div className="receipt-card">
               <div className="receipt-header">
                 <h3>
@@ -419,7 +419,7 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
         <section className="report-section">
           <h2>Verify Report Integrity</h2>
           <p>
-            Verify any exported report or snapshot file against recorded BOT Chain fingerprints.
+            Verify any exported report or snapshot file against recorded BOT Chain Mainnet fingerprints.
             Tampered or modified files will fail verification immediately.
           </p>
 
@@ -572,14 +572,14 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
         {/* Footer with BOT Chain website and explorer links */}
         <footer className="footer-nav">
           <div>
-            <span>Release report backed by BOT Chain &amp; TestSprite</span>
+            <span>Release report backed by BOT Chain Mainnet &amp; TestSprite</span>
           </div>
           <div className="footer-links">
             <a href="https://botchain.ai" target="_blank" rel="noreferrer">
-              BOT Chain Website ↗
+              BOT Chain Mainnet Website ↗
             </a>
             <a href="https://scan.botchain.ai" target="_blank" rel="noreferrer">
-              BOT Chain Explorer ↗
+              BOT Chain Mainnet Explorer ↗
             </a>
           </div>
         </footer>
@@ -735,7 +735,7 @@ function buildMarkdownReport(
     `Verdict: ${formatValue(verdict)}`,
     `Target: ${detail.project.url}`,
     `Summary: ${summary}`,
-    pub ? `BOT Chain Publication: Version ${pub.version} · Hash ${pub.reportHash} · Tx ${pub.transactionHash}` : "",
+    pub ? `BOT Chain Mainnet Publication: Version ${pub.version} · Hash ${pub.reportHash} · Tx ${pub.transactionHash}` : "",
     "",
     "## TestSprite Evidence",
     latestRun ? `Latest run: ${formatValue(latestRun.status)} - ${latestRun.summary}` : "Latest run: none",
