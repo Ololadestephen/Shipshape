@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="part-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050d09"/>
+      <stop offset="35%" stop-color="#0a1a11"/>
+      <stop offset="70%" stop-color="#07140e"/>
+      <stop offset="100%" stop-color="#020604"/>
+    </linearGradient>
+
+    <!-- Radial Glows -->
+    <radialGradient id="glow-shipbot" cx="28%" cy="32%" r="40%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glow-botchain" cx="72%" cy="32%" r="40%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Text Gradients -->
+    <linearGradient id="hero-title-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#ecfdf5"/>
+      <stop offset="75%" stop-color="#6ee7b7"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+
+    <linearGradient id="card-border-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#10b981" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#047857" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <linearGradient id="card-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c2317" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#06140d" stop-opacity="0.95"/>
+    </linearGradient>
+
+    <linearGradient id="bridge-beam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#34d399" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Canvas Background -->
+  <rect width="1200" height="675" fill="url(#part-bg)"/>
+  <rect width="1200" height="675" fill="url(#glow-shipbot)"/>
+  <rect width="1200" height="675" fill="url(#glow-botchain)"/>
+
+  <!-- Subtle Perspective Network Grid -->
+  <g opacity="0.12" stroke="#10b981" stroke-width="1">
+    <line x1="0" y1="640" x2="1200" y2="640"/>
+    <line x1="0" y1="590" x2="1200" y2="590"/>
+    <line x1="0" y1="530" x2="1200" y2="530"/>
+    <line x1="0" y1="460" x2="1200" y2="460"/>
+    <line x1="0" y1="380" x2="1200" y2="380"/>
+    
+    <line x1="0" y1="675" x2="520" y2="280"/>
+    <line x1="200" y1="675" x2="560" y2="280"/>
+    <line x1="400" y1="675" x2="600" y2="280"/>
+    <line x1="600" y1="675" x2="600" y2="280"/>
+    <line x1="800" y1="675" x2="600" y2="280"/>
+    <line x1="1000" y1="675" x2="640" y2="280"/>
+    <line x1="1200" y1="675" x2="680" y2="280"/>
+  </g>
+
+  <!-- ================= TOP HEADER SECTION ================= -->
+  <!-- Official Partnership Pill Tag -->
+  <g transform="translate(415, 34)">
+    <rect width="370" height="32" rx="16" fill="#082816" stroke="#10b981" stroke-width="1.2"/>
+    <circle cx="18" cy="16" r="4.5" fill="#34d399"/>
+    <text x="32" y="20" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, Consolas, monospace" 
+          font-size="11" 
+          font-weight="700" 
+          letter-spacing="2" 
+          fill="#a7f3d0">OFFICIAL ECOSYSTEM INTEGRATION</text>
+  </g>
+
+  <!-- Big Announcement Hero Title -->
+  <text x="600" y="115" 
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif" 
+        font-size="44" 
+        font-weight="900" 
+        letter-spacing="1" 
+        fill="url(#hero-title-grad)" 
+        text-anchor="middle">SHIPBOT  ✕  BOT CHAIN</text>
+
+  <!-- Subheadline -->
+  <text x="600" y="148" 
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif" 
+        font-size="16.5" 
+        font-weight="500" 
+        fill="#cbd5e1" 
+        text-anchor="middle">
+    Automated Release-Readiness Decisions Anchored to BOT Chain Mainnet (Chain ID 677)
+  </text>
+
+  <!-- ================= LOGO BRIDGE SECTION (Cards for ShipBot & BOT Chain) ================= -->
+  <!-- Glowing Data Beam connecting the cards -->
+  <line x1="380" y1="230" x2="820" y2="230" stroke="url(#bridge-beam)" stroke-width="2.5" stroke-dasharray="6 6"/>
+
+  <!-- Center "X" / Interoperability Hub -->
+  <g transform="translate(600, 230)">
+    <circle cx="0" cy="0" r="30" fill="#082314" stroke="#34d399" stroke-width="2"/>
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+    <text x="0" y="7" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" 
+          font-size="20" 
+          font-weight="800" 
+          fill="#6ee7b7" 
+          text-anchor="middle">✕</text>
+    <rect x="-42" y="22" width="84" height="18" rx="9" fill="#041f10" stroke="#10b981" stroke-width="1"/>
+    <text x="0" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="8.5" font-weight="700" fill="#a7f3d0" text-anchor="middle">MAINNET</text>
+  </g>
+
+  <!-- LEFT HERO CARD: SHIPBOT -->
+  <g transform="translate(140, 170)">
+    <rect width="250" height="120" rx="14" fill="url(#card-fill)" stroke="url(#card-border-grad)" stroke-width="1.6"/>
+    <!-- ShipBot Logo Icon -->
+    <g transform="translate(24, 25)">
+      <polygon points="32,6 8,54 56,54" fill="none" stroke="#34d399" stroke-linejoin="round" stroke-width="4.5"/>
+      <polygon points="32,20 18,46 46,46" fill="#34d399"/>
+      <circle cx="32" cy="33" r="3.5" fill="#ffffff"/>
+    </g>
+    <!-- Label -->
+    <text x="96" y="52" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" 
+          font-size="24" 
+          font-weight="800" 
+          fill="#ffffff">ShipBot</text>
+    <text x="96" y="72" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+          font-size="12" 
+          font-weight="600" 
+          fill="#10b981">Automated QA Loops</text>
+    <text x="96" y="88" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+          font-size="10.5" 
+          fill="#94a3b8">TestSprite Verification</text>
+  </g>
+
+  <!-- RIGHT HERO CARD: BOT CHAIN -->
+  <g transform="translate(810, 170)">
+    <rect width="250" height="120" rx="14" fill="url(#card-fill)" stroke="url(#card-border-grad)" stroke-width="1.6"/>
+    <!-- BOT Chain Tech Emblem -->
+    <g transform="translate(24, 25)">
+      <!-- Hexagonal Robot Node Icon -->
+      <polygon points="32,6 56,20 56,48 32,62 8,48 8,20" fill="none" stroke="#34d399" stroke-width="3"/>
+      <!-- Inner core / eyes -->
+      <circle cx="24" cy="34" r="3.5" fill="#6ee7b7"/>
+      <circle cx="40" cy="34" r="3.5" fill="#6ee7b7"/>
+      <path d="M 23,45 Q 32,50 41,45" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="32" y1="6" x2="32" y2="16" stroke="#34d399" stroke-width="2"/>
+      <circle cx="32" cy="4" r="2.5" fill="#ffffff"/>
+    </g>
+    <!-- Label -->
+    <text x="96" y="52" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" 
+          font-size="24" 
+          font-weight="800" 
+          fill="#ffffff">BOT Chain</text>
+    <text x="96" y="72" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+          font-size="12" 
+          font-weight="600" 
+          fill="#34d399">Mainnet (Chain ID 677)</text>
+    <text x="96" y="88" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" 
+          font-size="10.5" 
+          fill="#94a3b8">AI &amp; Agent Infrastructure</text>
+  </g>
+
+  <!-- ================= THREE VALUE-PROPOSITION FEATURE CARDS ================= -->
+  <!-- Card 1: Automated Verification Loop -->
+  <g transform="translate(100, 325)">
+    <rect width="310" height="205" rx="12" fill="url(#card-fill)" stroke="url(#card-border-grad)" stroke-width="1.2"/>
+    <g transform="translate(20, 24)">
+      <rect width="36" height="36" rx="8" fill="#082a17" stroke="#10b981" stroke-width="1"/>
+      <text x="18" y="24" font-size="17" text-anchor="middle">⚡️</text>
+      <text x="48" y="23" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="15" font-weight="700" fill="#ffffff">Automated QA Loops</text>
+      
+      <text y="58" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="12" fill="#94a3b8">
+        <tspan x="0" dy="0">Tests deployed URLs against critical</tspan>
+        <tspan x="0" dy="18">user journeys. Generates concrete</tspan>
+        <tspan x="0" dy="18">remediation plans for failing checks</tspan>
+        <tspan x="0" dy="18">before greenlighting release.</tspan>
+      </text>
+
+      <rect y="116" width="130" height="22" rx="6" fill="#052814" stroke="#10b981" stroke-width="0.8"/>
+      <text x="10" y="131" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="9.5" font-weight="600" fill="#34d399">TestSprite Agent</text>
+    </g>
+  </g>
+
+  <!-- Card 2: Deterministic Snapshot -->
+  <g transform="translate(445, 325)">
+    <rect width="310" height="205" rx="12" fill="url(#card-fill)" stroke="url(#card-border-grad)" stroke-width="1.2"/>
+    <g transform="translate(20, 24)">
+      <rect width="36" height="36" rx="8" fill="#082a17" stroke="#10b981" stroke-width="1"/>
+      <text x="18" y="24" font-size="17" text-anchor="middle">🔒</text>
+      <text x="48" y="23" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="15" font-weight="700" fill="#ffffff">Deterministic Digest</text>
+      
+      <text y="58" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="12" fill="#94a3b8">
+        <tspan x="0" dy="0">Recursive canonical JSON sorting</tspan>
+        <tspan x="0" dy="18">strips private credentials and computes</tspan>
+        <tspan x="0" dy="18">a 32-byte SHA-256 fingerprint</tspan>
+        <tspan x="0" dy="18">matching native EVM bytes32.</tspan>
+      </text>
+
+      <rect y="116" width="130" height="22" rx="6" fill="#052814" stroke="#10b981" stroke-width="0.8"/>
+      <text x="10" y="131" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="9.5" font-weight="600" fill="#34d399">SHA-256 Digest</text>
+    </g>
+  </g>
+
+  <!-- Card 3: Immutable On-Chain Registry -->
+  <g transform="translate(790, 325)">
+    <rect width="310" height="205" rx="12" fill="url(#card-fill)" stroke="url(#card-border-grad)" stroke-width="1.2"/>
+    <g transform="translate(20, 24)">
+      <rect width="36" height="36" rx="8" fill="#082a17" stroke="#10b981" stroke-width="1"/>
+      <text x="18" y="24" font-size="17" text-anchor="middle">📜</text>
+      <text x="48" y="23" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="15" font-weight="700" fill="#ffffff">On-Chain Registry</text>
+      
+      <text y="58" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="12" fill="#94a3b8">
+        <tspan x="0" dy="0">ShipBotRegistry EVM contract on</tspan>
+        <tspan x="0" dy="18">BOT Chain Mainnet immutably locks</tspan>
+        <tspan x="0" dy="18">reports, versions, and deployer</tspan>
+        <tspan x="0" dy="18">identities with zero tampering risk.</tspan>
+      </text>
+
+      <rect y="116" width="130" height="22" rx="6" fill="#052814" stroke="#10b981" stroke-width="0.8"/>
+      <text x="10" y="131" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="9.5" font-weight="600" fill="#34d399">ShipBotRegistry</text>
+    </g>
+  </g>
+
+  <!-- ================= BOTTOM HUD FOOTER BAR ================= -->
+  <g transform="translate(100, 560)">
+    <rect width="1000" height="70" rx="10" fill="#06190f" stroke="#10b981" stroke-width="1"/>
+    
+    <!-- Left: Smart Contract Address -->
+    <g transform="translate(20, 20)">
+      <text font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="10.5" fill="#64748b">DEPLOYED REGISTRY CONTRACT (BOT CHAIN MAINNET):</text>
+      <text y="22" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="13" font-weight="700" fill="#34d399">0x421b57ea0ab9aa3e9e0422244660be9507d42c12</text>
+    </g>
+
+    <!-- Right: Explorer & Live Links -->
+    <g transform="translate(730, 24)">
+      <rect width="115" height="28" rx="6" fill="#0a2a18" stroke="#10b981" stroke-width="1"/>
+      <text x="12" y="18" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="10.5" font-weight="600" fill="#a7f3d0">scan.botchain.ai</text>
+      
+      <rect x="125" y="0" width="125" height="28" rx="6" fill="#0a2a18" stroke="#10b981" stroke-width="1"/>
+      <text x="135" y="18" font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', monospace" font-size="10.5" font-weight="600" fill="#34d399">Chain ID: 677</text>
+    </g>
+  </g>
+</svg>

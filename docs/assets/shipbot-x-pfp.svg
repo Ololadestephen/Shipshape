@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bg-grad" cx="50%" cy="48%" r="65%">
+      <stop offset="0%" stop-color="#142c1e"/>
+      <stop offset="45%" stop-color="#0a1810"/>
+      <stop offset="85%" stop-color="#040906"/>
+      <stop offset="100%" stop-color="#020403"/>
+    </radialGradient>
+
+    <!-- Center Ambient Glow -->
+    <radialGradient id="center-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#059669" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#047857" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Metallic Emerald Gradients -->
+    <linearGradient id="shield-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a7f3d0"/>
+      <stop offset="25%" stop-color="#34d399"/>
+      <stop offset="70%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+
+    <linearGradient id="shield-fill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#152f20" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0a1710" stop-opacity="0.95"/>
+    </linearGradient>
+
+    <!-- Ship Facet Gradients -->
+    <linearGradient id="ship-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+
+    <linearGradient id="ship-right" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="45%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <linearGradient id="ship-center" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="35%" stop-color="#a7f3d0"/>
+      <stop offset="75%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <linearGradient id="thruster-glow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#10b981" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#a7f3d0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Canvas Background -->
+  <rect width="800" height="800" fill="url(#bg-grad)"/>
+
+  <!-- Subtle Cyber Matrix Grid Background -->
+  <g opacity="0.14" stroke="#10b981" stroke-width="1">
+    <path d="M 0,200 L 800,200 M 0,400 L 800,400 M 0,600 L 800,600" />
+    <path d="M 200,0 L 200,800 M 400,0 L 400,800 M 600,0 L 600,800" />
+    <path d="M 0,0 L 800,800 M 800,0 L 0,800" stroke-dasharray="6 8"/>
+  </g>
+
+  <!-- Ambient Radar & Verification Target Rings (Safe inside 720px circle) -->
+  <g opacity="0.4">
+    <circle cx="400" cy="400" r="365" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="12 16"/>
+    <circle cx="400" cy="400" r="325" fill="none" stroke="#059669" stroke-width="1" stroke-dasharray="4 8"/>
+    <circle cx="400" cy="400" r="270" fill="none" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.45"/>
+  </g>
+
+  <!-- Precision Radar Tick Marks -->
+  <g stroke="#34d399" stroke-width="2.5" opacity="0.7">
+    <line x1="400" y1="28" x2="400" y2="46"/>
+    <line x1="400" y1="754" x2="400" y2="772"/>
+    <line x1="28" y1="400" x2="46" y2="400"/>
+    <line x1="754" y1="400" x2="772" y2="400"/>
+    <line x1="140" y1="140" x2="154" y2="154"/>
+    <line x1="660" y1="140" x2="646" y2="154"/>
+    <line x1="140" y1="660" x2="154" y2="646"/>
+    <line x1="660" y1="660" x2="646" y2="646"/>
+  </g>
+
+  <!-- Central Ambient Energy Bloom -->
+  <circle cx="400" cy="370" r="220" fill="url(#center-glow)"/>
+
+  <!-- Centerpiece: Hexagonal Tech Shield Portal -->
+  <polygon points="
+    400,135
+    608,255
+    608,495
+    400,615
+    192,495
+    192,255"
+    fill="url(#shield-fill)"
+    stroke="url(#shield-stroke)"
+    stroke-width="3.5"
+  />
+
+  <!-- Concentric Inner Hexagon Accent -->
+  <polygon points="
+    400,160
+    585,268
+    585,482
+    400,590
+    215,482
+    215,268"
+    fill="none"
+    stroke="#34d399"
+    stroke-width="1.2"
+    stroke-opacity="0.4"
+    stroke-dasharray="14 10"
+  />
+
+  <!-- Ship Thruster Flame Glow -->
+  <polygon points="360,465 400,550 440,465 400,485" fill="url(#thruster-glow)"/>
+
+  <!-- The SHIPBOT Iconic Geometric Stealth Vessel (Centered at 400, 365) -->
+  <g id="shipbot-vessel">
+    <!-- Left Wing (Darker shaded facet) -->
+    <polygon points="400,190 270,475 370,455 400,425" fill="url(#ship-left)" stroke="#10b981" stroke-width="1.5" stroke-linejoin="round"/>
+    
+    <!-- Right Wing (Brighter specular facet) -->
+    <polygon points="400,190 530,475 430,455 400,425" fill="url(#ship-right)" stroke="#6ee7b7" stroke-width="1.5" stroke-linejoin="round"/>
+    
+    <!-- Center Spine Hull Ridge -->
+    <polygon points="400,190 418,335 400,440 382,335" fill="url(#ship-center)" opacity="0.95"/>
+
+    <!-- Inner Delta Geometric Verification Frame -->
+    <polygon points="400,260 330,430 470,430" fill="none" stroke="#ecfdf5" stroke-width="4.5" stroke-linejoin="round"/>
+    <polygon points="400,300 355,410 445,410" fill="#34d399" stroke="#6ee7b7" stroke-width="1.5" opacity="0.95"/>
+    
+    <!-- Core Luminous Power Beacon -->
+    <circle cx="400" cy="370" r="14" fill="#10b981" opacity="0.5"/>
+    <circle cx="400" cy="370" r="8" fill="#ffffff"/>
+    <circle cx="400" cy="370" r="4" fill="#a7f3d0"/>
+  </g>
+
+  <!-- Beacon Pulse Indicator at Apex -->
+  <circle cx="400" cy="190" r="10" fill="#34d399" opacity="0.4"/>
+  <circle cx="400" cy="190" r="5" fill="#6ee7b7"/>
+  <circle cx="400" cy="190" r="2.5" fill="#ffffff"/>
+
+  <!-- Verification Status Pill & Brand Wordmark -->
+  <g id="pfp-label">
+    <!-- Brand Wordmark -->
+    <text x="400" y="668" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="34" 
+          font-weight="800" 
+          letter-spacing="10" 
+          fill="url(#text-grad)" 
+          text-anchor="middle">SHIPBOT</text>
+    
+    <!-- Sub-badge: BOT CHAIN MAINNET -->
+    <rect x="270" y="690" width="260" height="26" rx="13" fill="#082013" stroke="#10b981" stroke-width="1.2" stroke-opacity="0.85"/>
+    <circle cx="286" cy="703" r="4.5" fill="#34d399"/>
+    <text x="405" y="708" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, Consolas, monospace" 
+          font-size="11" 
+          font-weight="700" 
+          letter-spacing="2" 
+          fill="#34d399" 
+          text-anchor="middle">BOT CHAIN • 677</text>
+  </g>
+</svg>

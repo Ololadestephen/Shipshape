@@ -201,3 +201,24 @@ Implementation should follow applicable AGENTS.md instructions and the user's qu
 
 - **Unresolved Decisions, Credentials, Permissions, and Next Action:**
   - Next Action: Run frontend deployment on Vercel with `VITE_REPORT_REGISTRY_ADDRESS=0x421b57ea0ab9aa3e9e0422244660be9507d42c12`, and conduct the four-wallet usage exercise (4 distinct publication transactions) on BOT Chain Mainnet.
+
+
+## Execution Note: 2026-11-07 (Social Deliverables & Visual Assets)
+
+- **Files Changed & Created:**
+  - `docs/SOCIAL_POSTS.md` (created): Complete social deliverables package including:
+    - 1 official partnership announcement post tagging `@BOTChain` with links to contract, live app, and GitHub.
+    - 5 standalone educational/architectural posts covering the problem, the TestSprite verification loop, smart contract architecture, public verification against tampering, and developer onboarding.
+  - `docs/assets/shipbot-x-pfp.svg` & `docs/assets/shipbot-x-pfp.png` (created): High-resolution (800x800 retina and 400x400 standard) X profile picture featuring the ShipBot stealth delta-wing insignia, hexagonal shield portal, radar verification rings, and BOT Chain 677 indicator badge.
+  - `docs/assets/shipbot-x-cover.svg` & `docs/assets/shipbot-x-cover.png` (created): 1500x500 X cover header banner with avatar-safe layout, typographic branding, capability pills, and a floating glassmorphic verification HUD card displaying live BOT Chain Mainnet contract parameters.
+  - `docs/assets/shipbot-botchain-partnership.svg` & `docs/assets/shipbot-botchain-partnership.png` (created): 1200x675 16:9 official co-branded partnership card featuring ShipBot and BOT Chain emblems, interoperability bridge, three feature pillars, and mainnet contract registry footer.
+
+- **Commands Run and Actual Outcomes:**
+  - `sips -s format png docs/assets/shipbot-x-pfp.svg --out docs/assets/shipbot-x-pfp.png`: Rendered 800x800 RGBA PNG (558,123 bytes).
+  - `sips -z 400 400 docs/assets/shipbot-x-pfp.png --out docs/assets/shipbot-x-pfp-400.png`: Rendered 400x400 RGBA PNG (170,666 bytes).
+  - `sips -s format png docs/assets/shipbot-x-cover.svg --out docs/assets/shipbot-x-cover.png`: Rendered 1500x500 RGBA PNG (839,701 bytes).
+  - `sips -s format png docs/assets/shipbot-botchain-partnership.svg --out docs/assets/shipbot-botchain-partnership.png`: Rendered 1200x675 RGBA PNG (855,761 bytes).
+  - Python PIL verification script: Confirmed 100% integrity, correct color spaces, and exact target dimensions across all 4 PNG assets.
+
+- **Unresolved Decisions, Credentials, Permissions, and Next Action:**
+  - Next Action: Push the new assets to Git, prepare the live frontend deployment on Vercel, and execute the 4-wallet usage exercise on BOT Chain Mainnet.
