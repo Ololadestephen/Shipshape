@@ -1,20 +1,88 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  fetchPublishableSnapshot,
+  recordPublication,
+  verifyReportFile,
+  type Check,
+  type LoopEntry,
+  type ProjectDetail,
+  type PublicationRecord,
+  type VerificationRun,
+  type VerifyReportResponse
+} from "../api";
+import {
+  BOT_CHAIN_ID,
+  BOT_EXPLORER_URL,
+  formatAddress,
+  formatTxHash,
+  isEthereumAvailable,
+  publishReportToChain,
+  requestWalletConnection,
+  switchToBotChain
+} from "../botchain";
 import { EmptyProjectState, PageIntro } from "../components/ui";
 import { useProjectData } from "../projectContext";
 import { formatValue } from "../viewModel";
-import type { Check, LoopEntry, ProjectDetail, VerificationRun } from "../api";
 
 export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
-  const { detail, report, loading, error, regenerateReport } = useProjectData();
+  const { detail, report, loading, error, refresh, regenerateReport } = useProjectData();
   const [regenerating, setRegenerating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Wallet and publication state
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [chainId, setChainId] = useState<number | null>(null);
+  const [connectingWallet, setConnectingWallet] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<string | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
+
+  // Verification state
+  const [verificationInput, setVerificationInput] = useState("");
+  const [verifyingFile, setVerifyingFile] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<VerifyReportResponse | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
+  // Sync wallet provider accounts and chain changes
+  useEffect(() => {
+    if (!isEthereumAvailable()) return;
+    const provider = (window as unknown as { ethereum: any }).ethereum;
+
+    const handleAccounts = (accounts: string[]) => {
+      setWalletAddress(accounts[0] || null);
+    };
+    const handleChain = (chainIdHex: string) => {
+      setChainId(parseInt(chainIdHex, 16));
+    };
+
+    provider.on?.("accountsChanged", handleAccounts);
+    provider.on?.("chainChanged", handleChain);
+
+    // Initial check if already connected
+    provider
+      .request?.({ method: "eth_accounts" })
+      .then((accounts: string[]) => {
+        if (accounts?.[0]) {
+          setWalletAddress(accounts[0]);
+          provider
+            .request?.({ method: "eth_chainId" })
+            .then((idHex: string) => setChainId(parseInt(idHex, 16)))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      provider.removeListener?.("accountsChanged", handleAccounts);
+      provider.removeListener?.("chainChanged", handleChain);
+    };
+  }, []);
 
   const shareUrl = useMemo(() => {
     if (!detail) {
       return "";
     }
-
     return `${window.location.origin}/share/${encodeURIComponent(detail.project.id)}`;
   }, [detail]);
 
@@ -31,14 +99,18 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
   const latestEvidence = latestRun?.source === "testsprite" ? latestRun.evidence : undefined;
   const failedChecks = currentDetail.checks.filter((check) => check.status === "failed");
   const verifiedChecks = currentDetail.checks.filter((check) => check.status === "verified");
-  const remainingChecks = currentDetail.checks.filter((check) => check.status === "untested" || check.status === "fixing");
+  const remainingChecks = currentDetail.checks.filter(
+    (check) => check.status === "untested" || check.status === "fixing"
+  );
   const markdown = buildMarkdownReport(currentDetail, report.summary, report.verdict, latestRun);
   const decision = decisionText(report.verdict, failedChecks.length);
+
+  const isBotChain = chainId === BOT_CHAIN_ID;
+  const latestPublication: PublicationRecord | undefined = currentDetail.latestPublication;
 
   async function handleRegenerateReport() {
     setRegenerating(true);
     setActionError(null);
-
     try {
       await regenerateReport();
     } catch (caught) {
@@ -63,11 +135,142 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${currentDetail.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "shipshape"}-launch-report.md`;
+    link.download = `${currentDetail.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "shipbot"}-launch-report.md`;
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  async function exportSnapshotJson() {
+    setActionError(null);
+    try {
+      const snapshotData = await fetchPublishableSnapshot(currentDetail.project.id);
+      const blob = new Blob([JSON.stringify(snapshotData.snapshot, null, 2)], {
+        type: "application/json;charset=utf-8"
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${currentDetail.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "shipbot"}-snapshot-v${snapshotData.nextVersion}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "Unable to export snapshot JSON");
+    }
+  }
+
+  async function handleConnectWallet() {
+    setActionError(null);
+    setConnectingWallet(true);
+    try {
+      const res = await requestWalletConnection();
+      setWalletAddress(res.address);
+      setChainId(res.chainId);
+    } catch (caught: any) {
+      setActionError(caught?.message ?? "Unable to connect wallet");
+    } finally {
+      setConnectingWallet(false);
+    }
+  }
+
+  async function handleSwitchChain() {
+    setActionError(null);
+    try {
+      await switchToBotChain();
+      setChainId(BOT_CHAIN_ID);
+    } catch (caught: any) {
+      setActionError(caught?.message ?? "Unable to switch network to BOT Chain");
+    }
+  }
+
+  async function handlePublishToChain() {
+    if (!walletAddress) {
+      await handleConnectWallet();
+      return;
+    }
+
+    if (!isBotChain) {
+      await handleSwitchChain();
+      return;
+    }
+
+    setActionError(null);
+    setPublishSuccess(null);
+    setPublishing(true);
+    setPublishStatus("Generating canonical report snapshot...");
+
+    try {
+      const snapshotData = await fetchPublishableSnapshot(currentDetail.project.id);
+      setPublishStatus("Confirm transaction in your wallet...");
+
+      const predHash = (snapshotData.predecessorDigest ??
+        ("0x" + "0".repeat(64))) as `0x${string}`;
+
+      const pubResult = await publishReportToChain({
+        reportHash: snapshotData.digest as `0x${string}`,
+        predecessorHash: predHash,
+        version: snapshotData.nextVersion,
+        reportReference: currentDetail.project.id
+      });
+
+      setPublishStatus("Recording receipt in registry...");
+      await recordPublication(currentDetail.project.id, {
+        transactionHash: pubResult.transactionHash,
+        publisher: pubResult.publisher,
+        contractAddress: pubResult.contractAddress,
+        chainId: BOT_CHAIN_ID,
+        blockNumber: pubResult.blockNumber,
+        reportHash: snapshotData.digest,
+        predecessorHash: snapshotData.predecessorDigest,
+        version: snapshotData.nextVersion,
+        reportReference: currentDetail.project.id,
+        snapshot: snapshotData.snapshot
+      });
+
+      setPublishSuccess(`Report v${snapshotData.nextVersion} confirmed on BOT Chain!`);
+      await refresh();
+    } catch (caught: any) {
+      setActionError(caught?.message ?? "Failed to publish report to BOT Chain");
+    } finally {
+      setPublishing(false);
+      setPublishStatus(null);
+    }
+  }
+
+  async function handleVerifyReport(textToVerify?: string) {
+    const text = textToVerify ?? verificationInput;
+    if (!text.trim()) {
+      setVerificationError("Please select a file or paste a report snapshot to verify.");
+      return;
+    }
+
+    setVerifyingFile(true);
+    setVerificationError(null);
+    setVerificationResult(null);
+
+    try {
+      const result = await verifyReportFile(text, latestPublication?.reportHash);
+      setVerificationResult(result);
+    } catch (caught: any) {
+      setVerificationError(caught?.message ?? "Failed to verify report payload");
+    } finally {
+      setVerifyingFile(false);
+    }
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setVerificationInput(content);
+      void handleVerifyReport(content);
+    };
+    reader.readAsText(file);
   }
 
   return (
@@ -76,30 +279,209 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
       <article className="report-document">
         <header className={`report-cover verdict-${report.verdict}`}>
           <div>
-            <span>ShipShape launch decision</span>
+            <span>ShipBot launch decision</span>
             <h1>{formatValue(report.verdict)}</h1>
             <p>{decision}</p>
           </div>
           <div className="report-actions">
-            <button className="report-action-primary" type="button" onClick={() => void copyValue(shareUrl, "share link")}>
+            <button
+              className="report-action-primary"
+              type="button"
+              onClick={() => void copyValue(shareUrl, "share link")}
+            >
               {copied === "share link" ? "Copied" : "Share Link"}
             </button>
-            <button className="report-action-secondary" type="button" onClick={() => void copyValue(markdown, "markdown")}>
+            <button
+              className="report-action-secondary"
+              type="button"
+              onClick={() => void copyValue(markdown, "markdown")}
+            >
               {copied === "markdown" ? "Copied" : "Copy Report"}
             </button>
             <button className="report-action-secondary" type="button" onClick={exportReport}>
               Export Report
             </button>
+            <button className="report-action-secondary" type="button" onClick={() => void exportSnapshotJson()}>
+              Export JSON
+            </button>
           </div>
         </header>
 
         {actionError && <p className="form-error">{actionError}</p>}
+        {publishSuccess && <p className="form-success" style={{ padding: "12px 28px", color: "#1e6335", fontWeight: 600 }}>{publishSuccess}</p>}
+
+        {/* Wallet & BOT Chain publication toolbar (workspace view) */}
+        {!publicView && (
+          <div className="wallet-toolbar" style={{ margin: "16px 28px 0" }}>
+            {walletAddress ? (
+              <>
+                <span className="wallet-badge">
+                  ● Wallet: {formatAddress(walletAddress)}
+                </span>
+                {isBotChain ? (
+                  <span className="wallet-badge" style={{ background: "#e8f7ee", color: "#25663c" }}>
+                    ✓ BOT Chain Mainnet (Chain ID 677)
+                  </span>
+                ) : (
+                  <button
+                    className="report-action-secondary"
+                    type="button"
+                    onClick={() => void handleSwitchChain()}
+                    style={{ minHeight: "32px", fontSize: "12px", padding: "0 12px", color: "var(--critical)", borderColor: "var(--critical)" }}
+                  >
+                    ⚠ Wrong Network: Switch to BOT Chain Mainnet (677)
+                  </button>
+                )}
+                <button
+                  className="report-action-primary"
+                  type="button"
+                  disabled={publishing || !isBotChain}
+                  onClick={() => void handlePublishToChain()}
+                  style={{ minHeight: "34px", fontSize: "13px", padding: "0 16px" }}
+                >
+                  {publishing ? publishStatus ?? "Publishing..." : latestPublication ? "Publish New Version" : "Publish to BOT Chain Mainnet"}
+                </button>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: "13px", color: "var(--muted)" }}>
+                  Connect your wallet to publish this release snapshot to BOT Chain Mainnet (Chain ID 677).
+                </span>
+                <button
+                  className="report-action-primary"
+                  type="button"
+                  disabled={connectingWallet}
+                  onClick={() => void handleConnectWallet()}
+                  style={{ minHeight: "34px", fontSize: "13px", padding: "0 16px" }}
+                >
+                  {connectingWallet ? "Connecting..." : isEthereumAvailable() ? "Connect Wallet" : "Web3 Wallet"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         <section className="report-summary-grid">
           <ReportMetric label="Project" value={currentDetail.project.name} />
           <ReportMetric label="Target" value={hostname(currentDetail.project.url)} />
           <ReportMetric label="Verified" value={`${report.verifiedChecks}/${report.totalChecks}`} />
           <ReportMetric label="Failures" value={String(failedChecks.length)} />
+        </section>
+
+        {/* Blockchain Publication Receipt */}
+        {latestPublication && (
+          <section className="report-section">
+            <h2>BOT Chain Publication Receipt</h2>
+            <div className="receipt-card">
+              <div className="receipt-header">
+                <h3>
+                  <span>✓</span> Version {latestPublication.version} On-Chain Record
+                </h3>
+                <span className="wallet-badge" style={{ background: "#edf8f0", color: "#1e6335" }}>
+                  Confirmed
+                </span>
+              </div>
+              <div className="receipt-grid">
+                <div className="receipt-field">
+                  <span>Publisher</span>
+                  <strong>{latestPublication.publisher}</strong>
+                </div>
+                <div className="receipt-field">
+                  <span>Report Fingerprint</span>
+                  <strong>{latestPublication.reportHash}</strong>
+                </div>
+                <div className="receipt-field">
+                  <span>Transaction Hash</span>
+                  <a
+                    href={`${BOT_EXPLORER_URL}/tx/${latestPublication.transactionHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {formatTxHash(latestPublication.transactionHash)} ↗
+                  </a>
+                </div>
+                <div className="receipt-field">
+                  <span>Publication Time</span>
+                  <strong>{new Date(latestPublication.publishedAt).toLocaleString()}</strong>
+                </div>
+                {latestPublication.predecessorHash && (
+                  <div className="receipt-field">
+                    <span>Predecessor Fingerprint</span>
+                    <strong>{latestPublication.predecessorHash}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Public Report Integrity Verification Tool */}
+        <section className="report-section">
+          <h2>Verify Report Integrity</h2>
+          <p>
+            Verify any exported report or snapshot file against recorded BOT Chain fingerprints.
+            Tampered or modified files will fail verification immediately.
+          </p>
+
+          <div className="verify-card">
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+              <label className="report-action-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", padding: "0 14px", minHeight: "36px", fontSize: "13px" }}>
+                <span>📁 Upload Export File</span>
+                <input
+                  type="file"
+                  accept=".json,.md,.txt"
+                  onChange={handleFileUpload}
+                  style={{ display: "none" }}
+                />
+              </label>
+              <button
+                className="report-action-primary"
+                type="button"
+                disabled={verifyingFile}
+                onClick={() => void handleVerifyReport()}
+                style={{ minHeight: "36px", fontSize: "13px", padding: "0 16px" }}
+              >
+                {verifyingFile ? "Verifying..." : "Verify Fingerprint"}
+              </button>
+            </div>
+
+            <div className="verify-input-group">
+              <textarea
+                className="verify-textarea"
+                placeholder="Or paste exported snapshot JSON / report content here to check..."
+                value={verificationInput}
+                onChange={(e) => setVerificationInput(e.target.value)}
+              />
+            </div>
+
+            {verificationError && <p className="form-error">{verificationError}</p>}
+
+            {verificationResult && (
+              <div
+                className={`verify-verdict-box ${
+                  verificationResult.matchesExpected ? "match" : "mismatch"
+                }`}
+              >
+                {verificationResult.matchesExpected ? (
+                  <div>
+                    <strong>✓ Verified Authentic</strong>
+                    <p style={{ margin: "4px 0 0", fontSize: "13px" }}>
+                      Computed fingerprint <code>{verificationResult.computedHash}</code> matches the
+                      recorded publication. No alterations detected.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <strong>✗ Integrity Alert: Fingerprint Mismatch</strong>
+                    <p style={{ margin: "4px 0 0", fontSize: "13px" }}>
+                      Computed fingerprint <code>{verificationResult.computedHash}</code> does not match
+                      expected receipt fingerprint. The report has been altered.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="report-section">
@@ -110,7 +492,11 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
             {latestRun ? `, ${latestRun.summary}` : "."}
           </p>
           {!publicView && (
-            <button className="report-regenerate" disabled={regenerating} onClick={() => void handleRegenerateReport()}>
+            <button
+              className="report-regenerate"
+              disabled={regenerating}
+              onClick={() => void handleRegenerateReport()}
+            >
               {regenerating ? "Regenerating..." : "Regenerate Report"}
             </button>
           )}
@@ -148,9 +534,11 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
           <h2>Remediation Plan</h2>
           {failedChecks.length > 0 ? (
             <ol className="remediation-list">
-              {failedChecks.flatMap((check) => remediationSteps(check)).map((step, index) => (
-                <li key={`${step}-${index}`}>{step}</li>
-              ))}
+              {failedChecks
+                .flatMap((check) => remediationSteps(check))
+                .map((step, index) => (
+                  <li key={`${step}-${index}`}>{step}</li>
+                ))}
             </ol>
           ) : (
             <p>Keep the TestSprite gate connected and rerun after material UI or routing changes.</p>
@@ -180,6 +568,21 @@ export function ReportLoop({ publicView = false }: { publicView?: boolean }) {
             <p className="empty-state">No loop entries yet.</p>
           )}
         </section>
+
+        {/* Footer with BOT Chain website and explorer links */}
+        <footer className="footer-nav">
+          <div>
+            <span>Release report backed by BOT Chain &amp; TestSprite</span>
+          </div>
+          <div className="footer-links">
+            <a href="https://botchain.ai" target="_blank" rel="noreferrer">
+              BOT Chain Website ↗
+            </a>
+            <a href="https://scan.botchain.ai" target="_blank" rel="noreferrer">
+              BOT Chain Explorer ↗
+            </a>
+          </div>
+        </footer>
       </article>
     </div>
   );
@@ -303,7 +706,10 @@ function remediationSteps(check: Check) {
     ]
   };
 
-  return steps[check.category] ?? [`Fix the ${title} failure using the latest TestSprite evidence.`, "Rerun TestSprite and confirm the check is verified."];
+  return steps[check.category] ?? [
+    `Fix the ${title} failure using the latest TestSprite evidence.`,
+    "Rerun TestSprite and confirm the check is verified."
+  ];
 }
 
 function formatMappingMode(value: string) {
@@ -312,16 +718,24 @@ function formatMappingMode(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function buildMarkdownReport(detail: ProjectDetail, summary: string, verdict: string, latestRun?: VerificationRun) {
+function buildMarkdownReport(
+  detail: ProjectDetail,
+  summary: string,
+  verdict: string,
+  latestRun?: VerificationRun
+) {
   const failed = detail.checks.filter((check) => check.status === "failed");
   const verified = detail.checks.filter((check) => check.status === "verified");
   const evidence = latestRun?.evidence;
+  const pub = detail.latestPublication;
+
   const lines = [
-    `# ShipShape Launch Report: ${detail.project.name}`,
+    `# ShipBot Launch Report: ${detail.project.name}`,
     "",
     `Verdict: ${formatValue(verdict)}`,
     `Target: ${detail.project.url}`,
     `Summary: ${summary}`,
+    pub ? `BOT Chain Publication: Version ${pub.version} · Hash ${pub.reportHash} · Tx ${pub.transactionHash}` : "",
     "",
     "## TestSprite Evidence",
     latestRun ? `Latest run: ${formatValue(latestRun.status)} - ${latestRun.summary}` : "Latest run: none",
@@ -333,11 +747,13 @@ function buildMarkdownReport(detail: ProjectDetail, summary: string, verdict: st
     ...(failed.length ? failed.map((check) => `- ${check.title}: ${findingDescription(check)}`) : ["- None"]),
     "",
     "## Remediation",
-    ...(failed.length ? failed.flatMap((check) => remediationSteps(check).map((step) => `- ${step}`)) : ["- Keep TestSprite connected and rerun after material changes."]),
+    ...(failed.length
+      ? failed.flatMap((check) => remediationSteps(check).map((step) => `- ${step}`))
+      : ["- Keep TestSprite connected and rerun after material changes."]),
     "",
     "## Verified Checks",
     ...(verified.length ? verified.map((check) => `- ${check.title}`) : ["- None"])
-  ];
+  ].filter(Boolean);
 
   return lines.join("\n");
 }

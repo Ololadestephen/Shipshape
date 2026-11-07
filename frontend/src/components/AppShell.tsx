@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function AppChrome({ children }: { children: React.ReactNode }) {
   const { detail } = useProjectData();
-  const projectName = detail?.project.name ?? "ShipShape";
+  const projectName = detail?.project.name ?? "ShipBot";
 
   return (
     <div className="app">

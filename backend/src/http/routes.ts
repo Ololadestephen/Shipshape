@@ -9,11 +9,13 @@ import {
   createRunSchema,
   createTestSpriteProjectSchema,
   generateChecklistSchema,
+  publishReportInputSchema,
   runResultInputSchema,
   updateCheckSchema,
   updateFlowSchema,
   updateIssueSchema,
-  updateProjectSchema
+  updateProjectSchema,
+  verifyReportInputSchema
 } from "./schemas.js";
 import { HttpError, type ShipShapeService } from "../services/shipshapeService.js";
 
@@ -148,6 +150,28 @@ export function createApiRouter(service: ShipShapeService): Router {
   router.post("/projects/:projectId/loop", (request, response) => {
     const body = parseBody(createLoopEntrySchema, request);
     response.status(201).json({ data: service.createLoopEntry(request.params.projectId, body) });
+  });
+
+  router.get("/projects/:projectId/snapshot", (request, response) => {
+    response.json({ data: service.getPublishableSnapshot(request.params.projectId) });
+  });
+
+  router.post("/projects/:projectId/publish", (request, response) => {
+    const body = parseBody(publishReportInputSchema, request);
+    response.status(201).json({ data: service.recordPublication(request.params.projectId, body) });
+  });
+
+  router.get("/projects/:projectId/publications", (request, response) => {
+    response.json({ data: service.listPublications(request.params.projectId) });
+  });
+
+  router.get("/publications/:reportHash", (request, response) => {
+    response.json({ data: service.getPublicationByHash(request.params.reportHash) });
+  });
+
+  router.post("/verify-report", (request, response) => {
+    const body = parseBody(verifyReportInputSchema, request);
+    response.json({ data: service.verifyReport(body) });
   });
 
   router.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {

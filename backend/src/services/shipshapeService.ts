@@ -1,5 +1,10 @@
 import { generateChecks } from "../domain/checklistGenerator.js";
 import { generateLaunchReport } from "../domain/readiness.js";
+import {
+  buildPublishableSnapshot,
+  computeReportDigest,
+  publishableReportSnapshotSchema
+} from "../domain/snapshot.js";
 import { createId, nowIso } from "./id.js";
 import { createTestSpriteProjectCli, readTestSpriteConfig, runTestSpriteCli } from "./testspriteCli.js";
 import { mapTestSpriteOutput } from "./testspriteMapper.js";
@@ -16,6 +21,7 @@ import type {
   LoopEntryKind,
   Project,
   ProjectStatus,
+  PublicationRecord,
   ResultStatus,
   RunResult,
   RunSource,
@@ -410,6 +416,167 @@ export class ShipShapeService {
     };
 
     return this.store.createLoopEntry(entry);
+  }
+
+  getPublishableSnapshot(projectId: string) {
+    const project = this.ensureProject(projectId);
+    const report = this.getOrGenerateReport(projectId);
+    const checks = this.store.listChecks(projectId);
+    const runs = this.store.listRuns(projectId);
+    const latestRun = runs.slice().sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
+    const latestPub = this.store.getLatestPublication(projectId);
+    const nextVersion = latestPub ? latestPub.version + 1 : 1;
+    const predecessorDigest = latestPub ? latestPub.reportHash : null;
+
+    const snapshot = buildPublishableSnapshot({
+      project,
+      report,
+      checks,
+      latestRun,
+      version: nextVersion,
+      predecessorDigest
+    });
+
+    const digest = computeReportDigest(snapshot);
+
+    return {
+      snapshot,
+      digest,
+      nextVersion,
+      predecessorDigest
+    };
+  }
+
+  recordPublication(
+    projectId: string,
+    input: {
+      transactionHash: string;
+      publisher: string;
+      contractAddress: string;
+      chainId: number;
+      blockNumber?: number;
+      reportHash: string;
+      predecessorHash?: string | null;
+      version: number;
+      reportReference?: string;
+      snapshot: unknown;
+    }
+  ): PublicationRecord {
+    const project = this.ensureProject(projectId);
+
+    const parsedSnapshot = publishableReportSnapshotSchema.parse(input.snapshot);
+
+    if (parsedSnapshot.projectId !== projectId) {
+      throw new HttpError(400, "Snapshot project id does not match target project", "SNAPSHOT_PROJECT_MISMATCH");
+    }
+
+    const computedDigest = computeReportDigest(parsedSnapshot);
+    if (computedDigest.toLowerCase() !== input.reportHash.toLowerCase()) {
+      throw new HttpError(
+        400,
+        `Computed digest ${computedDigest} does not match provided reportHash ${input.reportHash}`,
+        "SNAPSHOT_DIGEST_MISMATCH"
+      );
+    }
+
+    const latestPub = this.store.getLatestPublication(projectId);
+    if (input.version === 1) {
+      if (input.predecessorHash) {
+        throw new HttpError(400, "Version 1 cannot have a predecessorHash", "INVALID_VERSION");
+      }
+    } else {
+      if (!latestPub) {
+        throw new HttpError(400, `Version ${input.version} requires a predecessor publication`, "PREDECESSOR_REQUIRED");
+      }
+      if (input.version !== latestPub.version + 1) {
+        throw new HttpError(
+          400,
+          `Expected version ${latestPub.version + 1}, got ${input.version}`,
+          "INVALID_VERSION"
+        );
+      }
+      if (latestPub.reportHash.toLowerCase() !== (input.predecessorHash ?? "").toLowerCase()) {
+        throw new HttpError(400, "Predecessor hash does not match latest publication", "PREDECESSOR_MISMATCH");
+      }
+    }
+
+    if (this.store.getPublicationByHash(input.reportHash)) {
+      throw new HttpError(409, "Report hash has already been published", "DUPLICATE_REPORT_HASH");
+    }
+
+    const publication: PublicationRecord = {
+      id: createId("pub"),
+      projectId,
+      version: input.version,
+      reportHash: input.reportHash.toLowerCase(),
+      predecessorHash: input.predecessorHash ? input.predecessorHash.toLowerCase() : null,
+      publisher: input.publisher.toLowerCase(),
+      transactionHash: input.transactionHash.toLowerCase(),
+      chainId: input.chainId,
+      contractAddress: input.contractAddress.toLowerCase(),
+      blockNumber: input.blockNumber,
+      reportReference: input.reportReference ?? project.id,
+      snapshot: parsedSnapshot,
+      publishedAt: nowIso()
+    };
+
+    this.store.createPublication(publication);
+
+    this.createLoopEntry(projectId, {
+      kind: "verification",
+      title: `Report v${publication.version} published to BOT Chain`,
+      body: `Snapshot published by ${publication.publisher} in tx ${publication.transactionHash}. Fingerprint: ${publication.reportHash}`
+    });
+
+    return publication;
+  }
+
+  listPublications(projectId: string) {
+    this.ensureProject(projectId);
+    return this.store.listPublications(projectId);
+  }
+
+  getPublicationByHash(reportHash: string) {
+    const pub = this.store.getPublicationByHash(reportHash);
+    if (!pub) {
+      throw notFound("Publication not found");
+    }
+    return pub;
+  }
+
+  verifyReport(input: { snapshotOrExport: string; expectedHash?: string }) {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(input.snapshotOrExport);
+    } catch {
+      const jsonMatch = input.snapshotOrExport.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch) {
+        try {
+          payload = JSON.parse(jsonMatch[1]);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    if (!payload || typeof payload !== "object") {
+      throw new HttpError(400, "Unable to parse report snapshot JSON from input", "INVALID_REPORT_PAYLOAD");
+    }
+
+    const parsedSnapshot = publishableReportSnapshotSchema.parse(payload);
+    const computedHash = computeReportDigest(parsedSnapshot);
+
+    const expected = input.expectedHash?.trim().toLowerCase();
+    const matchesExpected = expected ? computedHash === expected : true;
+
+    const existingPub = this.store.getPublicationByHash(computedHash);
+
+    return {
+      valid: true,
+      computedHash,
+      matchesExpected,
+      publication: existingPub
+    };
   }
 
   private applyRunResult(result: RunResult) {

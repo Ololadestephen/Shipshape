@@ -97,3 +97,31 @@ export const createLoopEntrySchema = z.object({
   issueId: z.string().trim().optional(),
   evidenceUrl: z.string().trim().url().optional()
 });
+
+export const publishReportInputSchema = z.object({
+  transactionHash: z.string().trim().regex(/^0x[0-9a-fA-F]{64}$/, "Must be a 32-byte transaction hash"),
+  publisher: z.string().trim().regex(/^0x[0-9a-fA-F]{40}$/, "Must be a 20-byte EVM address"),
+  contractAddress: z.string().trim().regex(/^0x[0-9a-fA-F]{40}$/, "Must be a 20-byte EVM address"),
+  chainId: z.number().int(),
+  blockNumber: z.number().int().optional(),
+  reportHash: z.string().trim().regex(/^0x[0-9a-fA-F]{64}$/, "Must be a 32-byte hex hash"),
+  predecessorHash: z
+    .string()
+    .trim()
+    .regex(/^0x[0-9a-fA-F]{64}$/, "Must be a 32-byte hex hash")
+    .nullable()
+    .optional(),
+  version: z.number().int().positive(),
+  reportReference: z.string().trim().max(256).optional(),
+  snapshot: z.record(z.unknown())
+});
+
+export const verifyReportInputSchema = z.object({
+  snapshotOrExport: z.string().min(1),
+  expectedHash: z
+    .string()
+    .trim()
+    .regex(/^0x[0-9a-fA-F]{64}$/, "Must be a 32-byte hex hash")
+    .optional()
+});
+

@@ -1,8 +1,11 @@
 node_modules/
 dist/
 frontend/dist/
+contracts/out/
+cache/
 .shipshape/
 .claude/
+.desloppify/
 .env
 .DS_Store
 npm-debug.log*

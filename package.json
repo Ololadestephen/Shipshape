@@ -15,7 +15,10 @@
     "start": "node dist/backend/src/server.js",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:contracts": "forge test",
+    "test:watch": "vitest",
+    "check:deployer": "tsx scripts/check-deployer.ts",
+    "deploy:contract": "tsx scripts/deploy-contract.ts"
   },
   "dependencies": {
     "@testsprite/testsprite-cli": "^0.2.0",
@@ -23,6 +26,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg": "^8.22.0",
+    "viem": "^2.57.16",
     "zod": "^3.24.1"
   },
   "devDependencies": {

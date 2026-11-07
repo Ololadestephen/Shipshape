@@ -6,6 +6,7 @@ import type {
   LoopEntry,
   Project,
   ProjectDetail,
+  PublicationRecord,
   ReadinessSummary,
   RunResult,
   VerificationRun
@@ -20,6 +21,7 @@ export interface ShipShapeState {
   runs: VerificationRun[];
   results: RunResult[];
   reports: LaunchReport[];
+  publications?: PublicationRecord[];
   loop: LoopEntry[];
 }
 
@@ -28,16 +30,22 @@ export class MemoryStore {
   private readonly onChange?: (state: ShipShapeState) => void;
 
   constructor(initialState?: ShipShapeState, onChange?: (state: ShipShapeState) => void) {
-    this.state = initialState ?? {
-      projects: [],
-      flows: [],
-      checks: [],
-      issues: [],
-      runs: [],
-      results: [],
-      reports: [],
-      loop: []
-    };
+    this.state = initialState
+      ? {
+          ...initialState,
+          publications: initialState.publications ?? []
+        }
+      : {
+          projects: [],
+          flows: [],
+          checks: [],
+          issues: [],
+          runs: [],
+          results: [],
+          reports: [],
+          publications: [],
+          loop: []
+        };
     this.onChange = onChange;
   }
 
@@ -76,6 +84,7 @@ export class MemoryStore {
     this.state.runs = this.state.runs.filter((run) => run.projectId !== projectId);
     this.state.results = this.state.results.filter((result) => result.projectId !== projectId);
     this.state.reports = this.state.reports.filter((report) => report.projectId !== projectId);
+    this.state.publications = (this.state.publications ?? []).filter((pub) => pub.projectId !== projectId);
     this.state.loop = this.state.loop.filter((entry) => entry.projectId !== projectId);
     return this.commit(this.state.projects.length < before);
   }
@@ -88,6 +97,7 @@ export class MemoryStore {
 
     const checks = this.listChecks(projectId);
     const issues = this.listIssues(projectId);
+    const publications = this.listPublications(projectId);
 
     return {
       project,
@@ -96,9 +106,34 @@ export class MemoryStore {
       issues,
       runs: this.listRuns(projectId),
       latestReport: this.getLatestReport(projectId),
+      latestPublication: publications[0],
+      publications,
       loop: this.listLoop(projectId),
       readiness: calculateReadiness(checks, issues)
     };
+  }
+
+  listPublications(projectId: string): PublicationRecord[] {
+    return (this.state.publications ?? [])
+      .filter((pub) => pub.projectId === projectId)
+      .sort((a, b) => b.version - a.version);
+  }
+
+  getLatestPublication(projectId: string): PublicationRecord | undefined {
+    return this.listPublications(projectId)[0];
+  }
+
+  getPublicationByHash(reportHash: string): PublicationRecord | undefined {
+    const normalized = reportHash.trim().toLowerCase();
+    return (this.state.publications ?? []).find((pub) => pub.reportHash.toLowerCase() === normalized);
+  }
+
+  createPublication(publication: PublicationRecord): PublicationRecord {
+    if (!this.state.publications) {
+      this.state.publications = [];
+    }
+    this.state.publications.push(publication);
+    return this.commit(publication);
   }
 
   listFlows(projectId: string): Flow[] {

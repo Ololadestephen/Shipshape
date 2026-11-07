@@ -120,6 +120,22 @@ export interface LoopEntry {
   createdAt: string;
 }
 
+export interface PublicationRecord {
+  id: string;
+  projectId: string;
+  version: number;
+  reportHash: string;
+  predecessorHash: string | null;
+  publisher: string;
+  transactionHash: string;
+  chainId: number;
+  contractAddress: string;
+  blockNumber?: number;
+  reportReference: string;
+  snapshot: unknown;
+  publishedAt: string;
+}
+
 export interface ReadinessSummary {
   score: number;
   status: ProjectStatus;
@@ -142,6 +158,8 @@ export interface ProjectDetail {
   issues: Issue[];
   runs: VerificationRun[];
   latestReport?: LaunchReport;
+  latestPublication?: PublicationRecord;
+  publications?: PublicationRecord[];
   loop: LoopEntry[];
   readiness: ReadinessSummary;
 }
@@ -265,6 +283,61 @@ export async function generateProjectReport(projectId: string): Promise<LaunchRe
     method: "POST",
     body: JSON.stringify({})
   });
+}
+
+export interface PublishableSnapshotResponse {
+  snapshot: unknown;
+  digest: string;
+  nextVersion: number;
+  predecessorDigest: string | null;
+}
+
+export async function fetchPublishableSnapshot(projectId: string): Promise<PublishableSnapshotResponse> {
+  return apiGet<PublishableSnapshotResponse>(`/projects/${projectId}/snapshot`);
+}
+
+export interface RecordPublicationPayload {
+  transactionHash: string;
+  publisher: string;
+  contractAddress: string;
+  chainId: number;
+  blockNumber?: number;
+  reportHash: string;
+  predecessorHash?: string | null;
+  version: number;
+  reportReference?: string;
+  snapshot: unknown;
+}
+
+export async function recordPublication(
+  projectId: string,
+  payload: RecordPublicationPayload
+): Promise<PublicationRecord> {
+  return apiRequest<PublicationRecord>(`/projects/${projectId}/publish`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export interface VerifyReportResponse {
+  valid: boolean;
+  computedHash: string;
+  matchesExpected: boolean;
+  publication?: PublicationRecord;
+}
+
+export async function verifyReportFile(
+  snapshotOrExport: string,
+  expectedHash?: string
+): Promise<VerifyReportResponse> {
+  return apiRequest<VerifyReportResponse>("/verify-report", {
+    method: "POST",
+    body: JSON.stringify({ snapshotOrExport, expectedHash })
+  });
+}
+
+export async function getPublication(reportHash: string): Promise<PublicationRecord> {
+  return apiGet<PublicationRecord>(`/publications/${encodeURIComponent(reportHash)}`);
 }
 
 async function apiGet<T>(path: string): Promise<T> {

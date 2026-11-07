@@ -146,6 +146,22 @@ export interface LoopEntry {
   createdAt: string;
 }
 
+export interface PublicationRecord {
+  id: string;
+  projectId: string;
+  version: number;
+  reportHash: string;
+  predecessorHash: string | null;
+  publisher: string;
+  transactionHash: string;
+  chainId: number;
+  contractAddress: string;
+  blockNumber?: number;
+  reportReference: string;
+  snapshot: unknown;
+  publishedAt: string;
+}
+
 export interface ReadinessSummary {
   score: number;
   status: ProjectStatus;
@@ -164,6 +180,8 @@ export interface ProjectDetail {
   issues: Issue[];
   runs: VerificationRun[];
   latestReport?: LaunchReport;
+  latestPublication?: PublicationRecord;
+  publications?: PublicationRecord[];
   loop: LoopEntry[];
   readiness: ReadinessSummary;
 }
