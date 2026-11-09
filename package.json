@@ -18,7 +18,8 @@
     "test:contracts": "forge test",
     "test:watch": "vitest",
     "check:deployer": "tsx scripts/check-deployer.ts",
-    "deploy:contract": "tsx scripts/deploy-contract.ts"
+    "deploy:contract": "tsx scripts/deploy-contract.ts",
+    "publish:participants": "tsx scripts/run-participant-publications.ts"
   },
   "dependencies": {
     "@testsprite/testsprite-cli": "^0.2.0",
